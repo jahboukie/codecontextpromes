@@ -12,7 +12,7 @@
     
     <!-- Preconnect to external domains for performance -->
     <link rel="preconnect" href="https://js.stripe.com">
-    <link rel="preconnect" href="https://codecontext-mes.firebaseapp.com">
+    <link rel="preconnect" href="https://{{FIREBASE_PROJECT_ID}}.firebaseapp.com">
     
     <style>
         body {
@@ -164,12 +164,12 @@
     <script>
         // Firebase Configuration (injected by build.js)
         const firebaseConfig = {
-            apiKey: "AIzaSyCDSIrBDnbw82ufAMPXAXp_XAn-LX1o5b8",
-            authDomain: "codecontext-mes.firebaseapp.com",
-            projectId: "codecontext-mes",
-            storageBucket: "codecontext-mes.firebasestorage.app",
-            messagingSenderId: "63262602984",
-            appId: "1:63262602984:web:1dec121fd23c27adf1fb5d"
+            apiKey: "{{FIREBASE_API_KEY}}",
+            authDomain: "{{FIREBASE_AUTH_DOMAIN}}",
+            projectId: "{{FIREBASE_PROJECT_ID}}",
+            storageBucket: "{{FIREBASE_STORAGE_BUCKET}}",
+            messagingSenderId: "{{FIREBASE_MESSAGING_SENDER_ID}}",
+            appId: "{{FIREBASE_APP_ID}}"
         };
         
         // Initialize Firebase
@@ -177,7 +177,7 @@
         const functions = firebase.functions();
         
         // Initialize Stripe
-        const stripe = Stripe('pk_test_your_publishable_key_here');
+        const stripe = Stripe('{{STRIPE_PUBLISHABLE_KEY}}');
         
         // Load early adopter count
         async function loadEarlyAdopterCount() {
