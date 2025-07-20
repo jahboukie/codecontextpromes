@@ -1,13 +1,16 @@
 /**
  * CodeContextPro-MES Memory Engine
- * Security-first persistent memory implementation
+ * Security-first persistent memory implementation with SQLite database
  * 
  * Handles secure storage and retrieval of development context
  * with comprehensive input validation and secret detection
+ * 
+ * Phase 1 Sprint 1.3: Real SQLite Database Integration
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { MemoryDatabase, SearchOptions } from './database/MemoryDatabase';
 
 export interface Memory {
     id: number;
@@ -27,18 +30,41 @@ export interface SearchResult {
 export class MemoryEngine {
     private projectPath: string;
     private dbPath: string;
+    private database: MemoryDatabase;
+    private initialized: boolean = false;
 
     constructor(projectPath: string) {
         this.projectPath = projectPath;
         this.dbPath = path.join(projectPath, '.codecontext', 'memory.db');
+        this.database = new MemoryDatabase(this.dbPath);
         this.validateProjectPath();
     }
 
     /**
-     * Store memory with security validation
-     * Implements Phase 1 Sprint 1.1 specification
+     * Initialize database connection
+     * Phase 1 Sprint 1.3: Real database initialization
      */
-    storeMemory(content: string, context: string = 'cli-command', type: string = 'general'): number {
+    async initialize(): Promise<void> {
+        if (this.initialized) return;
+        
+        try {
+            await this.database.initialize();
+            this.initialized = true;
+            console.log('✅ Memory engine initialized with SQLite database');
+        } catch (error) {
+            console.error('❌ Failed to initialize memory engine:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Store memory with security validation and real database persistence
+     * Phase 1 Sprint 1.3: Real SQLite implementation
+     */
+    async storeMemory(content: string, context: string = 'cli-command', type: string = 'general'): Promise<number> {
+        // Ensure database is initialized
+        await this.initialize();
+
         // Input validation (security requirement)
         if (!content || typeof content !== 'string') {
             throw new Error('Invalid content: must be non-empty string');
@@ -64,26 +90,33 @@ export class MemoryEngine {
             throw new Error('Type must be a string');
         }
 
-        // Create memory object
-        const memory: Memory = {
-            id: Date.now() + Math.floor(Math.random() * 1000), // Ensure uniqueness
-            content: content.trim(),
-            context: context || 'unknown',
-            type: type || 'general',
-            timestamp: new Date().toISOString()
-        };
+        try {
+            // Store in SQLite database
+            const memoryId = await this.database.storeMemory(
+                content.trim(),
+                context || 'unknown',
+                type || 'general',
+                [], // tags - can be extended later
+                {} // metadata - can be extended later
+            );
 
-        // Store memory (CodeContext Pro handles the actual SQLite operations)
-        console.log(`✅ Memory stored: [${memory.type}] ${memory.content.substring(0, 50)}...`);
-        
-        return memory.id;
+            console.log(`✅ Memory stored: [${type}] ${content.substring(0, 50)}...`);
+            return memoryId;
+
+        } catch (error) {
+            console.error('❌ Failed to store memory:', error);
+            throw error;
+        }
     }
 
     /**
-     * Search memories with relevance scoring
-     * Implements Phase 1 Sprint 1.1 specification
+     * Search memories with real database full-text search
+     * Phase 1 Sprint 1.3: Real SQLite FTS implementation
      */
-    searchMemories(query: string, limit: number = 10): SearchResult[] {
+    async searchMemories(query: string, limit: number = 10): Promise<SearchResult[]> {
+        // Ensure database is initialized
+        await this.initialize();
+
         // Input validation
         if (!query || typeof query !== 'string') {
             throw new Error('Invalid query: must be non-empty string');
@@ -100,26 +133,20 @@ export class MemoryEngine {
         // Security: ensure query doesn't contain secrets
         this.validateNoSecrets(query);
 
-        // For Phase 1, return mock results (CodeContext Pro will handle real search)
-        const mockResults: SearchResult[] = [
-            {
-                id: 1,
-                content: `Memory related to: ${query}`,
-                relevance: 0.95,
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 2,
-                content: `Additional context for: ${query}`,
-                relevance: 0.87,
-                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-            }
-        ];
+        try {
+            // Use real database search with FTS5
+            const results = await this.database.searchMemories(query, {
+                limit,
+                minRelevance: 0.1
+            });
 
-        const results = mockResults.slice(0, limit);
-        console.log(`✅ Search completed: "${query}" - Found ${results.length} results`);
-        
-        return results;
+            console.log(`✅ Search completed: "${query}" - Found ${results.length} results`);
+            return results;
+
+        } catch (error) {
+            console.error('❌ Search failed:', error);
+            throw error;
+        }
     }
 
     /**
@@ -159,12 +186,51 @@ export class MemoryEngine {
     }
 
     /**
+     * Get database statistics
+     * Phase 1 Sprint 1.3: Real database statistics
+     */
+    async getStats(): Promise<{ totalMemories: number; totalSizeBytes: number; lastUpdated: string }> {
+        await this.initialize();
+        return await this.database.getStats();
+    }
+
+    /**
+     * Get memory by ID
+     * Phase 1 Sprint 1.3: Database retrieval
+     */
+    async getMemoryById(id: number): Promise<any | null> {
+        await this.initialize();
+        return await this.database.getMemoryById(id);
+    }
+
+    /**
+     * Delete memory by ID
+     * Phase 1 Sprint 1.3: Database deletion
+     */
+    async deleteMemory(id: number): Promise<boolean> {
+        await this.initialize();
+        return await this.database.deleteMemory(id);
+    }
+
+    /**
+     * Close database connection
+     * Phase 1 Sprint 1.3: Proper cleanup
+     */
+    async close(): Promise<void> {
+        if (this.initialized) {
+            await this.database.close();
+            this.initialized = false;
+        }
+    }
+
+    /**
      * Get project information
      */
-    getProjectInfo(): { path: string; dbPath: string } {
+    getProjectInfo(): { path: string; dbPath: string; initialized: boolean } {
         return {
             path: this.projectPath,
-            dbPath: this.dbPath
+            dbPath: this.dbPath,
+            initialized: this.initialized
         };
     }
 }

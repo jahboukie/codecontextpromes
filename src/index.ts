@@ -139,7 +139,7 @@ export class CodeContextCLI {
             }
 
             // Search memories
-            const memories = this.memoryEngine.searchMemories(query, limit);
+            const memories = await this.memoryEngine.searchMemories(query, limit);
 
             // Report usage (fire-and-forget)
             await this.firebaseService.reportUsage('recall', {

@@ -73,3 +73,6 @@ license.secure
 
 # Important documentation (never commit to public repo)
 IMPORTANT_DOCS_NEVER_COMMIT/
+
+# Developer tools and CLI (local development only)
+claude-use-this/

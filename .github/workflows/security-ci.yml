@@ -43,8 +43,8 @@ jobs:
         
     - name: Secret Scanning
       run: |
-        # Check for potential secrets in code
-        if grep -r "sk_" --include="*.ts" --include="*.js" src/; then
+        # Check for potential secrets in code (excluding test regex patterns)
+        if grep -r "sk_" --include="*.ts" --include="*.js" src/ | grep -v "/.*sk_.*/" | grep -v "toMatch.*sk_" | grep -q .; then
           echo "❌ Potential Stripe secret key found in source code!"
           exit 1
         fi
