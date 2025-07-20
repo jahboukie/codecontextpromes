@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "CodeContextPro-MES: AI Cognitive Upgrade with Persistent Memory and Secure Execution Sandbox",
   "main": "dist/index.js",
+  "bin": {
+    "codecontextpro": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/index.ts",
