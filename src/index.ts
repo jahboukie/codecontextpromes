@@ -64,6 +64,16 @@ export class CodeContextCLI {
             .action(async () => {
                 await this.handleStatus();
             });
+
+        // codecontext purchase command (Phase 1 Sprint 1.2)
+        this.program
+            .command('purchase')
+            .description('Purchase CodeContext Pro license')
+            .option('-t, --tier <tier>', 'License tier (free, founders, pro)', 'founders')
+            .option('--email <email>', 'Email for checkout')
+            .action(async (options) => {
+                await this.handlePurchase(options);
+            });
     }
 
     /**
@@ -198,6 +208,82 @@ export class CodeContextCLI {
         } catch (error) {
             console.error('❌ Failed to get status:');
             console.error(`   ${error instanceof Error ? error.message : 'Unknown error'}`);
+            process.exit(1);
+        }
+    }
+
+    /**
+     * Handle purchase command 
+     * Phase 1 Sprint 1.2: Secure license purchasing
+     */
+    private async handlePurchase(options: any): Promise<void> {
+        try {
+            console.log('💳 CodeContext Pro - Purchase License');
+            
+            // Set email if provided
+            if (options.email) {
+                process.env.CODECONTEXT_USER_EMAIL = options.email;
+                console.log(`   Email set to: ${options.email}`);
+            }
+
+            // Validate tier
+            const tier = options.tier?.toLowerCase() || 'founders';
+            const validTiers = ['free', 'founders', 'pro'];
+            
+            if (!validTiers.includes(tier)) {
+                console.error(`❌ Invalid tier: ${tier}`);
+                console.error(`   Valid options: ${validTiers.join(', ')}`);
+                process.exit(1);
+            }
+
+            console.log(`   Tier: ${tier}`);
+            
+            // Attempt purchase
+            const result = await this.licenseService.purchaseLicense(tier);
+            
+            if (result.success) {
+                console.log(`✅ ${result.message}`);
+                
+                if (result.checkoutUrl) {
+                    console.log(`\n🌐 Checkout URL: ${result.checkoutUrl}`);
+                    console.log('   Open this URL in your browser to complete payment');
+                }
+                
+                if (result.nextStep) {
+                    console.log(`\n📋 Next step: ${result.nextStep}`);
+                }
+                
+                // Report successful purchase initiation
+                await this.firebaseService.reportUsage('license_purchase_success', {
+                    tier: result.tier,
+                    hasCheckout: !!result.checkoutUrl
+                });
+                
+            } else {
+                console.error(`❌ Purchase failed: ${result.message}`);
+                
+                if (result.nextStep) {
+                    console.error(`   Next step: ${result.nextStep}`);
+                }
+                
+                // Report failed purchase attempt
+                await this.firebaseService.reportUsage('license_purchase_failure', {
+                    tier: result.tier,
+                    error: result.message
+                });
+                
+                process.exit(1);
+            }
+
+        } catch (error) {
+            console.error('❌ Failed to process purchase:');
+            console.error(`   ${error instanceof Error ? error.message : 'Unknown error'}`);
+            
+            // Report purchase error
+            await this.firebaseService.reportUsage('license_purchase_error', {
+                error: error instanceof Error ? error.message : 'Unknown error'
+            });
+            
             process.exit(1);
         }
     }

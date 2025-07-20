@@ -190,13 +190,21 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         });
 
         it('should validate purchase input', async () => {
-            const result = await service.purchaseLicense('founders');
-            expect(result.success).toBe(true);
-            expect(result.tier).toBe('founders');
+            // Without email, should fail with error message
+            const resultWithoutEmail = await service.purchaseLicense('founders');
+            expect(resultWithoutEmail.success).toBe(false);
+            expect(resultWithoutEmail.message).toContain('Email required for checkout');
 
-            await expect(service.purchaseLicense('invalid-tier')).rejects.toThrow(
-                'Invalid tier: invalid-tier'
-            );
+            // With email, should succeed
+            process.env.CODECONTEXT_USER_EMAIL = 'test@example.com';
+            const resultWithEmail = await service.purchaseLicense('founders');
+            expect(resultWithEmail.success).toBe(true);
+            expect(resultWithEmail.tier).toBe('founders');
+
+            // Invalid tier should return error (not throw)
+            const invalidTierResult = await service.purchaseLicense('invalid-tier');
+            expect(invalidTierResult.success).toBe(false);
+            expect(invalidTierResult.message).toContain('Invalid tier');
         });
 
         it('should validate license activation input', async () => {
