@@ -11,6 +11,7 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "security:audit": "npm audit",
     "security:check": "npm run lint && npm run security:audit",
+    "security:scan": "git diff --cached --name-only | xargs grep -l \"sk_\\|pk_live\\|AIza[0-9A-Za-z\\\\-_]{35}\" || echo \"No secrets detected\"",
     "firebase:deploy": "cd firebase-setup && npm run deploy",
     "firebase:local": "cd firebase-setup && npm run serve"
   },

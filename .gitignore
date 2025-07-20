@@ -67,6 +67,7 @@ license.secure
 .env
 .env.local
 .env.production
+.env.example
 
 # Note: package-lock.json is tracked for CI/CD reproducible builds
 
