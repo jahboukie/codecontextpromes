@@ -54,3 +54,18 @@ Thumbs.db
 # License files (store securely, not in repo)
 license.secure
 *.license
+
+# CodeContext Pro and Claude directories
+.codecontext/
+.claude/
+
+# Documentation files (except README)
+*.md
+!README.md
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Note: package-lock.json is tracked for CI/CD reproducible builds
