@@ -1,0 +1,56 @@
+
+# CodeContextPro-MES Security-First .gitignore
+
+# Environment Variables & Secrets (CRITICAL SECURITY)
+.env
+.env.local
+.env.production
+.env.test
+*.pem
+*.key
+*.p12
+.secrets/
+
+# Firebase Secrets
+firebase-setup/.env
+firebase-setup/service-account.json
+firebase-setup/config/production.json
+
+# CodeContext Pro
+.codecontext/memory.db
+.codecontext/logs/
+.codecontext/sandbox/
+.codecontext/*.enc
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Build outputs
+dist/
+build/
+.next/
+.firebase/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# License files (store securely, not in repo)
+license.secure
+*.license

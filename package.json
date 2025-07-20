@@ -1,0 +1,43 @@
+{
+  "name": "codecontextpro-mes",
+  "version": "1.0.0",
+  "description": "CodeContextPro-MES: AI Cognitive Upgrade with Persistent Memory and Secure Execution Sandbox",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "security:audit": "npm audit",
+    "security:check": "npm run lint && npm run security:audit",
+    "firebase:deploy": "cd firebase-setup && npm run deploy",
+    "firebase:local": "cd firebase-setup && npm run serve"
+  },
+  "keywords": [
+    "ai",
+    "memory",
+    "coding-assistant",
+    "claude",
+    "firebase",
+    "security"
+  ],
+  "author": "CodeContext Team",
+  "license": "PROPRIETARY",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-security": "^1.7.1",
+    "jest": "^29.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "better-sqlite3": "^8.0.0",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.0.0"
+  }
+}

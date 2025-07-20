@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "mode": "memory-execution",
+  "projectId": "a1454ec307f48adf",
+  "projectName": "codecontextmemory",
+  "createdAt": "2025-07-20T02:34:38.213Z",
+  "features": {
+    "memory": true,
+    "execution": true,
+    "intelligence": false
+  },
+  "executionEngine": {
+    "port": 3001,
+    "sandboxDir": "C:\\Users\\scorp\\codecontextmemory\\.codecontext\\sandbox",
+    "supportedLanguages": [
+      "javascript",
+      "typescript",
+      "python",
+      "go",
+      "rust"
+    ]
+  }
+}
