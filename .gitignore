@@ -69,3 +69,6 @@ license.secure
 .env.production
 
 # Note: package-lock.json is tracked for CI/CD reproducible builds
+
+# Important documentation (never commit to public repo)
+IMPORTANT_DOCS_NEVER_COMMIT/
