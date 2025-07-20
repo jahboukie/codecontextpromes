@@ -7,6 +7,8 @@ import { version, CodeContextCLI } from '../index';
 import { MemoryEngine } from '../MemoryEngine';
 import { FirebaseService } from '../FirebaseService';
 import { LicenseService } from '../LicenseService';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Mock process.exit for testing
 const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
@@ -14,10 +16,30 @@ const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: string |
 });
 
 describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
+    const testProjectPath = process.cwd();
+    const testCodecontextDir = path.join(testProjectPath, '.codecontext');
+
     beforeEach(() => {
         // Set test environment
         process.env.FIREBASE_PROJECT_ID = 'test-project';
         jest.clearAllMocks();
+
+        // Create .codecontext directory for tests if it doesn't exist
+        if (!fs.existsSync(testCodecontextDir)) {
+            fs.mkdirSync(testCodecontextDir, { recursive: true });
+        }
+    });
+
+    afterAll(() => {
+        // Clean up test directory if we created it
+        if (fs.existsSync(testCodecontextDir)) {
+            try {
+                fs.rmSync(testCodecontextDir, { recursive: true, force: true });
+            } catch (error) {
+                // Ignore cleanup errors in CI/CD
+                console.warn('Test cleanup warning:', error);
+            }
+        }
     });
 
     afterEach(() => {
@@ -39,7 +61,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         let engine: MemoryEngine;
 
         beforeEach(() => {
-            engine = new MemoryEngine(process.cwd());
+            engine = new MemoryEngine(testProjectPath);
         });
 
         it('should store valid memories', () => {
@@ -144,7 +166,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         let service: LicenseService;
 
         beforeEach(() => {
-            service = new LicenseService();
+            service = new LicenseService(testProjectPath);
         });
 
         it('should provide developer license for Phase 1', () => {
@@ -196,7 +218,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
     describe('CLI integration security', () => {
         it('should instantiate without throwing', () => {
             expect(() => {
-                new CodeContextCLI();
+                new CodeContextCLI(testProjectPath);
             }).not.toThrow();
         });
 
