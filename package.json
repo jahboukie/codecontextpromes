@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "jest",
-    "lint": "eslint \"{src,firebase-setup}/**/*.{ts,js}\" --ignore-pattern \"node_modules\" --ignore-pattern \"dist\" --env node --env es6",
+    "lint": "eslint \"{src,firebase-setup}/**/*.{ts,js}\" --ignore-pattern \"node_modules\" --ignore-pattern \"dist\" --env node --env es6 --parser @typescript-eslint/parser",
     "lint:fix": "eslint src/**/*.ts --fix",
     "security:audit": "npm audit",
     "security:check": "npm run lint && npm run security:audit",
