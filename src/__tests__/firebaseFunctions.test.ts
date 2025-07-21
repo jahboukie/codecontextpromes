@@ -248,7 +248,7 @@ describe('Firebase Functions Security Validation', () => {
             expect(indexContent).toContain('Critical configuration missing');
             
             // Should contain v2 secret management pattern
-            expect(indexContent).toContain('|| process.env.');
+            expect(indexContent).toContain('process.env.');
             expect(indexContent).toContain('defineSecret');
         });
 
@@ -271,9 +271,9 @@ describe('Firebase Functions Security Validation', () => {
             expect(indexContent).toContain('defineSecret(\'ENCRYPTION_MASTER_KEY\')');
             
             // Security compliance: Process.env fallbacks for local development
-            expect(indexContent).toContain('|| process.env.STRIPE_SECRET_KEY');
-            expect(indexContent).toContain('|| process.env.STRIPE_WEBHOOK_SECRET');
-            expect(indexContent).toContain('|| process.env.ENCRYPTION_MASTER_KEY');
+            expect(indexContent).toContain('process.env.STRIPE_SECRET_KEY ||');
+            expect(indexContent).toContain('process.env.STRIPE_WEBHOOK_SECRET ||');
+            expect(indexContent).toContain('process.env.ENCRYPTION_MASTER_KEY ||');
             
             // Security compliance: Proper error handling when config vars are missing
             expect(indexContent).toContain('!foundersPrice || !proPrice');
