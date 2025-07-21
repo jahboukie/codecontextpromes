@@ -15,7 +15,7 @@ import { Response } from 'express';
 admin.initializeApp();
 
 // Initialize Stripe with secret key from environment
-const stripe = new Stripe(functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16',
 });
 
@@ -232,8 +232,8 @@ export const createCheckout = functions.https.onRequest(async (req, res) => {
 
             // Get price ID based on tier
             const priceIds: Record<string, string> = {
-                founders: functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID || 'price_1Rn9xXELGHd3NbdJcbNXl8bk',
-                pro: functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID || 'price_1RnA4NELGHd3NbdJyONiR48N'
+                founders: process.env.STRIPE_FOUNDERS_PRICE_ID || 'price_1Rn9xXELGHd3NbdJcbNXl8bk',
+                pro: process.env.STRIPE_PRO_PRICE_ID || 'price_1RnA4NELGHd3NbdJyONiR48N'
             };
 
             const priceId = priceIds[tier];
@@ -302,7 +302,7 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
         }
 
         const sig = req.get('stripe-signature');
-        const webhookSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET;
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
         if (!sig || !webhookSecret) {
             console.error('❌ Missing Stripe signature or webhook secret');
@@ -340,7 +340,7 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
             
             // Generate userEncryptionKey (apiKey) using license.id + email + master key
             const crypto = require('crypto');
-            const masterKey = functions.config().encryption?.master_key || process.env.ENCRYPTION_MASTER_KEY;
+            const masterKey = process.env.ENCRYPTION_MASTER_KEY;
             
             if (!masterKey) {
                 console.error('❌ Missing ENCRYPTION_MASTER_KEY for license creation');
@@ -479,7 +479,7 @@ export const validateLicense = functions.https.onCall(async (data, context) => {
         if (!apiKey) {
             // Generate userEncryptionKey using license.id + email + master key
             const crypto = require('crypto');
-            const masterKey = functions.config().encryption?.master_key || process.env.ENCRYPTION_MASTER_KEY;
+            const masterKey = process.env.ENCRYPTION_MASTER_KEY;
             
             if (!masterKey) {
                 console.error('❌ Missing ENCRYPTION_MASTER_KEY');
