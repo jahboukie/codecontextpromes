@@ -338,14 +338,11 @@ export class LicenseService {
             const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
             const iv = crypto.randomBytes(16);
             
-            // Encrypt using AES-256-GCM with proper IV
-            const cipher = crypto.createCipherGCM('aes-256-gcm', encryptionKey, iv);
-            cipher.setAAD(Buffer.from('codecontext-license', 'utf8'));
+            // Encrypt using AES-256 (compatible cipher for Node.js)
+            const cipher = crypto.createCipher('aes256', encryptionKey);
             
-            let encrypted = cipher.update(JSON.stringify(licenseData), 'utf8');
-            encrypted = Buffer.concat([encrypted, cipher.final()]);
-            
-            const authTag = cipher.getAuthTag();
+            let encrypted = cipher.update(JSON.stringify(licenseData), 'utf8', 'base64');
+            encrypted += cipher.final('base64');
 
             // Calculate integrity hash for tamper detection
             const integrityHash = crypto.createHash('sha256')
@@ -353,11 +350,10 @@ export class LicenseService {
                 .digest('hex');
 
             const encryptedLicense = {
-                encrypted: encrypted.toString('base64'),
+                encrypted,
                 iv: iv.toString('base64'),
-                authTag: authTag.toString('base64'),
                 integrityHash,
-                algorithm: 'aes-256-gcm',
+                algorithm: 'aes256',
                 keyDerivation: 'pbkdf2-sha256-200000'
             };
 
@@ -381,16 +377,13 @@ export class LicenseService {
             // Generate the same machine-specific encryption key
             const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
             
-            // Decrypt using AES-256-GCM with proper IV
-            const iv = Buffer.from(encryptedLicenseData.iv, 'base64');
-            const decipher = crypto.createDecipherGCM('aes-256-gcm', encryptionKey, iv);
-            decipher.setAAD(Buffer.from('codecontext-license', 'utf8'));
-            decipher.setAuthTag(Buffer.from(encryptedLicenseData.authTag, 'base64'));
+            // Decrypt using AES-256 (compatible cipher for Node.js)
+            const decipher = crypto.createDecipher('aes256', encryptionKey);
             
-            let decrypted = decipher.update(Buffer.from(encryptedLicenseData.encrypted, 'base64'));
-            decrypted = Buffer.concat([decrypted, decipher.final()]);
+            let decrypted = decipher.update(encryptedLicenseData.encrypted, 'base64', 'utf8');
+            decrypted += decipher.final('utf8');
             
-            const licenseData = JSON.parse(decrypted.toString('utf8'));
+            const licenseData = JSON.parse(decrypted);
             
             // Verify integrity hash
             const calculatedHash = crypto.createHash('sha256')

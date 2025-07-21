@@ -4,8 +4,12 @@
  */
 
 import { LicenseService } from '../LicenseService';
+import { FirebaseService } from '../FirebaseService';
 import * as fs from 'fs';
 import * as path from 'path';
+
+// Mock FirebaseService to avoid real Firebase calls during tests
+jest.mock('../FirebaseService');
 
 // Mock process.exit for testing
 const mockExit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
@@ -18,8 +22,13 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
     let service: LicenseService;
 
     beforeEach(() => {
-        // Set test environment
+        // Set complete Firebase test environment
         process.env.FIREBASE_PROJECT_ID = 'test-project';
+        process.env.FIREBASE_API_KEY = 'test-api-key';
+        process.env.FIREBASE_AUTH_DOMAIN = 'test-project.firebaseapp.com';
+        process.env.FIREBASE_STORAGE_BUCKET = 'test-project.appspot.com';
+        process.env.FIREBASE_MESSAGING_SENDER_ID = '123456789';
+        process.env.FIREBASE_APP_ID = '1:123456789:web:abcdef123456';
         jest.clearAllMocks();
 
         // Create .codecontext directory for tests if it doesn't exist

@@ -119,25 +119,43 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
 
             res.json({
                 pricing: {
-                    free: {
-                        name: 'Free Tier',
-                        price: 0,
-                        limits: {
-                            recalls: 20,
-                            storage: 20,
-                            executions: 20
-                        }
-                    },
                     founders: {
                         name: 'Founders Special',
                         price: 59,
                         currency: 'USD',
                         period: 'month',
+                        description: 'Limited to 10,000 licenses - Forever pricing!',
                         limits: {
-                            recalls: 'unlimited',
-                            storage: 'unlimited', 
-                            executions: 'unlimited'
-                        }
+                            memory: 'unlimited',
+                            projects: 'multi-project',
+                            executions: 'unlimited',
+                            maxLicenses: 10000
+                        },
+                        features: [
+                            'UNLIMITED Memory',
+                            'Multi-Project Support',
+                            'Forever pricing lock',
+                            'Early adopter benefits'
+                        ],
+                        stripePriceId: 'price_1Rn9xXELGHd3NbdJcbNXl8bk'
+                    },
+                    pro: {
+                        name: 'Pro',
+                        price: 99,
+                        currency: 'USD',
+                        period: 'month',
+                        description: 'Available after Founders Special',
+                        limits: {
+                            memory: 2000,
+                            executions: 2000,
+                            projects: 'unlimited'
+                        },
+                        features: [
+                            '2,000 Memory Operations/month',
+                            '2,000 Execution Sandbox/month',
+                            'Unlimited Projects'
+                        ],
+                        stripePriceId: 'price_1RnA4NELGHd3NbdJyONiR48N'
                     }
                 },
                 stats: {
@@ -214,7 +232,8 @@ export const createCheckout = functions.https.onRequest(async (req, res) => {
 
             // Get price ID based on tier
             const priceIds: Record<string, string> = {
-                founders: functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID || 'price_founders_default'
+                founders: functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID || 'price_1Rn9xXELGHd3NbdJcbNXl8bk',
+                pro: functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID || 'price_1RnA4NELGHd3NbdJyONiR48N'
             };
 
             const priceId = priceIds[tier];
