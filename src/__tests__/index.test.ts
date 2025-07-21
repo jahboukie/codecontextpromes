@@ -208,7 +208,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         });
 
         it('should validate license activation input', async () => {
-            const validKey = 'test-license-key-12345';
+            const validKey = `license_${Date.now()}_abcdef123`;
             const result = await service.activateLicense(validKey);
             expect(result.active).toBe(true);
             expect(result.key).toBe(validKey);
