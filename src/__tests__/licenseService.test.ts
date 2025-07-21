@@ -31,6 +31,29 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
         process.env.FIREBASE_APP_ID = '1:123456789:web:abcdef123456';
         jest.clearAllMocks();
 
+        // Setup FirebaseService mock implementations
+        const MockedFirebaseServiceClass = FirebaseService as jest.MockedClass<typeof FirebaseService>;
+        const mockFirebaseService = MockedFirebaseServiceClass.prototype;
+        
+        // Default successful validation for most tests
+        mockFirebaseService.validateLicense = jest.fn().mockResolvedValue({
+            valid: true,
+            tier: 'founders',
+            status: 'active',
+            features: ['unlimited_memory', 'unlimited_execution', 'cloud_sync'],
+            activatedAt: new Date().toISOString(),
+            email: 'test@example.com',
+            apiKey: 'mock_user_encryption_key'
+        });
+
+        mockFirebaseService.reportUsage = jest.fn().mockResolvedValue(true);
+        mockFirebaseService.getConfig = jest.fn().mockReturnValue({
+            projectId: 'test-project',
+            apiEndpoint: 'mock-endpoint',
+            configured: true
+        });
+        mockFirebaseService.testConnection = jest.fn().mockResolvedValue(true);
+
         // Create .codecontext directory for tests if it doesn't exist
         if (!fs.existsSync(testCodecontextDir)) {
             fs.mkdirSync(testCodecontextDir, { recursive: true });
@@ -135,10 +158,15 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
         it('should activate valid license keys', async () => {
             const validKey = `license_${Date.now()}_abcdef123`;
             
-            // In test mode, Firebase function doesn't exist, so expect rejection
-            await expect(service.activateLicense(validKey)).rejects.toThrow(
-                'License validation failed: not-found'
-            );
+            // Mock the storeLicenseSecurely method to avoid crypto issues in tests
+            jest.spyOn(service as any, 'storeLicenseSecurely').mockResolvedValue(undefined);
+            
+            // The mock in beforeEach should return a successful validation
+            const result = await service.activateLicense(validKey);
+            
+            expect(result.active).toBe(true);
+            expect(result.tier).toBe('founders');
+            expect(result.key).toBe(validKey);
         });
     });
 
