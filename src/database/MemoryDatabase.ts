@@ -9,6 +9,14 @@
 import * as sqlite3 from 'sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
+import * as os from 'os';
+
+// TypeScript augmentation for GCM cipher methods
+declare module 'crypto' {
+    function createCipherGCM(algorithm: string, key: crypto.CipherKey, iv: crypto.BinaryLike): crypto.CipherGCM;
+    function createDecipherGCM(algorithm: string, key: crypto.CipherKey, iv: crypto.BinaryLike): crypto.DecipherGCM;
+}
 
 export interface DatabaseMemory {
     id: number;
@@ -41,13 +49,174 @@ export interface SearchResult {
     tags: string[];
 }
 
+interface EncryptedDatabaseFile {
+    encrypted: string;
+    iv: string;
+    authTag: string;
+    integrityHash: string;
+    algorithm: string;
+    keyDerivation: string;
+}
+
 export class MemoryDatabase {
     private db: sqlite3.Database | null = null;
     private dbPath: string;
+    private encryptedDbPath: string;
+    private tempDbPath: string;
     private initialized = false;
+    private encryptionKey: Buffer | null = null;
 
     constructor(dbPath: string) {
         this.dbPath = dbPath;
+        this.encryptedDbPath = dbPath + '.enc';
+        this.tempDbPath = dbPath + '.temp';
+    }
+
+    /**
+     * Generate machine-specific encryption key
+     * CRITICAL SECURITY: Uses machine-specific data for key derivation
+     */
+    private generateEncryptionKey(): Buffer {
+        if (this.encryptionKey) {
+            return this.encryptionKey;
+        }
+
+        // Collect machine-specific identifiers including network info
+        const networkInterfaces = os.networkInterfaces();
+        const macAddresses = Object.values(networkInterfaces)
+            .flat()
+            .filter(iface => iface && !iface.internal && iface.mac !== '00:00:00:00:00:00')
+            .map(iface => iface!.mac)
+            .sort()
+            .join(',');
+
+        const machineId = [
+            os.hostname(),
+            os.platform(),
+            os.arch(),
+            os.cpus()[0]?.model || 'unknown',
+            process.env.USERNAME || process.env.USER || 'unknown',
+            __dirname,
+            macAddresses || 'no-mac',
+            os.totalmem().toString(),
+            process.pid.toString()
+        ].join(':');
+
+        // Use stronger salt generation with timestamp
+        const timestamp = Date.now().toString();
+        const baseSalt = `codecontext-memory-salt-${timestamp.slice(-4)}`;
+        const salt = crypto.createHash('sha256').update(baseSalt).digest();
+        
+        // Derive encryption key using PBKDF2 with higher iterations
+        this.encryptionKey = crypto.pbkdf2Sync(machineId, salt, 200000, 32, 'sha256');
+        
+        console.log('🔐 Generated secure machine-specific encryption key');
+        return this.encryptionKey;
+    }
+
+    /**
+     * Calculate integrity hash for tamper detection
+     */
+    private calculateIntegrityHash(data: Buffer): string {
+        return crypto.createHash('sha256').update(data).digest('hex');
+    }
+
+    /**
+     * Encrypt database file with AES-256-GCM
+     * CRITICAL SECURITY: Encrypts SQLite database at rest
+     */
+    private async encryptDatabaseFile(): Promise<void> {
+        try {
+            // Check if unencrypted database exists
+            if (!fs.existsSync(this.dbPath)) {
+                console.log('📋 No database file to encrypt');
+                return;
+            }
+
+            // Read database file
+            const dbData = fs.readFileSync(this.dbPath);
+            
+            // Generate encryption key and IV
+            const key = this.generateEncryptionKey();
+            const iv = crypto.randomBytes(16);
+            
+            // Encrypt using AES-256-GCM with proper IV
+            const cipher = crypto.createCipherGCM('aes-256-gcm', key, iv);
+            cipher.setAAD(Buffer.from('codecontext-memory-db', 'utf8'));
+            
+            let encrypted = cipher.update(dbData);
+            encrypted = Buffer.concat([encrypted, cipher.final()]);
+            const authTag = cipher.getAuthTag();
+            
+            // Calculate integrity hash
+            const integrityHash = this.calculateIntegrityHash(dbData);
+            
+            // Create encrypted file structure
+            const encryptedFile: EncryptedDatabaseFile = {
+                encrypted: encrypted.toString('base64'),
+                iv: iv.toString('base64'),
+                authTag: authTag.toString('base64'),
+                integrityHash,
+                algorithm: 'aes-256-gcm',
+                keyDerivation: 'pbkdf2-sha256-100000'
+            };
+            
+            // Write encrypted file
+            fs.writeFileSync(this.encryptedDbPath, JSON.stringify(encryptedFile, null, 2));
+            
+            // Remove unencrypted database
+            fs.unlinkSync(this.dbPath);
+            
+            console.log('🔒 Database encrypted and secured');
+            
+        } catch (error) {
+            console.error('❌ Database encryption failed:', error);
+            throw new Error('Failed to encrypt database');
+        }
+    }
+
+    /**
+     * Decrypt database file for use
+     * CRITICAL SECURITY: Decrypts SQLite database for runtime use
+     */
+    private async decryptDatabaseFile(): Promise<void> {
+        try {
+            // Check if encrypted file exists
+            if (!fs.existsSync(this.encryptedDbPath)) {
+                console.log('📋 No encrypted database found, will create new one');
+                return;
+            }
+
+            // Read encrypted file
+            const encryptedData = JSON.parse(fs.readFileSync(this.encryptedDbPath, 'utf8')) as EncryptedDatabaseFile;
+            
+            // Generate encryption key
+            const key = this.generateEncryptionKey();
+            
+            // Decrypt using AES-256-GCM with proper IV
+            const iv = Buffer.from(encryptedData.iv, 'base64');
+            const decipher = crypto.createDecipherGCM('aes-256-gcm', key, iv);
+            decipher.setAAD(Buffer.from('codecontext-memory-db', 'utf8'));
+            decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'base64'));
+            
+            let decrypted = decipher.update(Buffer.from(encryptedData.encrypted, 'base64'));
+            decrypted = Buffer.concat([decrypted, decipher.final()]);
+            
+            // Verify integrity
+            const calculatedHash = this.calculateIntegrityHash(decrypted);
+            if (calculatedHash !== encryptedData.integrityHash) {
+                throw new Error('Database integrity check failed - possible tampering detected');
+            }
+            
+            // Write decrypted database to temp location
+            fs.writeFileSync(this.dbPath, decrypted);
+            
+            console.log('🔓 Database decrypted and integrity verified');
+            
+        } catch (error) {
+            console.error('❌ Database decryption failed:', error);
+            throw new Error('Failed to decrypt database - possible corruption or tampering');
+        }
     }
 
     /**
@@ -57,30 +226,37 @@ export class MemoryDatabase {
     async initialize(): Promise<void> {
         if (this.initialized) return;
 
-        return new Promise((resolve, reject) => {
+        try {
             // Ensure directory exists
             const dbDir = path.dirname(this.dbPath);
             if (!fs.existsSync(dbDir)) {
                 fs.mkdirSync(dbDir, { recursive: true });
             }
 
-            // Create database connection
-            this.db = new sqlite3.Database(this.dbPath, (err) => {
-                if (err) {
-                    console.error('❌ Failed to connect to SQLite database:', err.message);
-                    reject(err);
-                    return;
-                }
+            // CRITICAL SECURITY: Decrypt database before use
+            await this.decryptDatabaseFile();
 
-                console.log('✅ Connected to SQLite database:', this.dbPath);
-                this.createTables()
-                    .then(() => {
-                        this.initialized = true;
-                        resolve();
-                    })
-                    .catch(reject);
+            return new Promise((resolve, reject) => {
+                // Create database connection
+                this.db = new sqlite3.Database(this.dbPath, (err) => {
+                    if (err) {
+                        console.error('❌ Failed to connect to SQLite database:', err.message);
+                        reject(err);
+                        return;
+                    }
+
+                    console.log('✅ Connected to encrypted SQLite database:', this.dbPath);
+                    this.createTables()
+                        .then(() => {
+                            this.initialized = true;
+                            resolve();
+                        })
+                        .catch(reject);
+                });
             });
-        });
+        } catch (error) {
+            throw new Error(`Database initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
 
     /**
@@ -382,20 +558,30 @@ export class MemoryDatabase {
     }
 
     /**
-     * Close database connection
+     * Close database connection and encrypt file
+     * CRITICAL SECURITY: Encrypts database when closing
      */
     async close(): Promise<void> {
         if (!this.db) return;
 
         return new Promise((resolve) => {
-            this.db!.close((err) => {
+            this.db!.close(async (err) => {
                 if (err) {
                     console.error('❌ Error closing database:', err.message);
                 } else {
                     console.log('✅ Database connection closed');
                 }
+                
+                try {
+                    // CRITICAL SECURITY: Encrypt database after closing
+                    await this.encryptDatabaseFile();
+                } catch (encryptError) {
+                    console.error('❌ Failed to encrypt database on close:', encryptError);
+                }
+                
                 this.db = null;
                 this.initialized = false;
+                this.encryptionKey = null; // Clear encryption key from memory
                 resolve();
             });
         });

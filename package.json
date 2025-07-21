@@ -15,7 +15,7 @@
     "security:audit": "npm audit",
     "security:check": "npm run lint && npm run security:audit",
     "security:scan": "git diff --cached --name-only | xargs grep -l \"sk_\\|pk_live\\|AIza[0-9A-Za-z\\\\-_]{35}\" || echo \"No secrets detected\"",
-    "deploy": "npm run build && npm run test && cd firebase-setup && firebase deploy",
+    "deploy": "npm run build && npm run test && cd firebase-setup && node deploy.js",
     "firebase:deploy": "cd firebase-setup/functions && npm run deploy",
     "firebase:local": "cd firebase-setup && firebase emulators:start"
   },

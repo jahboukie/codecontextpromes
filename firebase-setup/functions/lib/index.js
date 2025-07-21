@@ -43,28 +43,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stripeWebhook = exports.createCheckout = exports.getPricingHttp = void 0;
+exports.reportUsage = exports.getAuthToken = exports.validateLicense = exports.stripeWebhook = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const stripe_1 = __importDefault(require("stripe"));
-const cors_1 = __importDefault(require("cors"));
 // Initialize Firebase Admin
 admin.initializeApp();
 // Initialize Stripe with secret key from environment
 const stripe = new stripe_1.default(((_a = functions.config().stripe) === null || _a === void 0 ? void 0 : _a.secret_key) || process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16',
-});
-// CORS configuration - restrict to known origins
-const corsHandler = (0, cors_1.default)({
-    origin: [
-        'https://codecontextpro-mes.web.app',
-        'https://codecontextpro-mes.firebaseapp.com',
-        /^https:\/\/.*\.codecontext\.pro$/,
-        // Development origins
-        'http://localhost:3000',
-        'http://localhost:5173'
-    ],
-    credentials: true
 });
 /**
  * Security Headers Middleware
@@ -76,16 +63,9 @@ function addSecurityHeaders(res) {
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'",
+        'Content-Security-Policy': "default-src 'self'",
         'Referrer-Policy': 'strict-origin-when-cross-origin'
     });
-}
-/**
- * Input validation helper
- */
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email) && email.length <= 320; // RFC 5321 limit
 }
 /**
  * Security: Detect potential secrets in input data
@@ -106,210 +86,14 @@ function validateNoSecrets(data) {
         }
     }
 }
-/**
- * Get Pricing Information and Early Adopter Stats
- * Public endpoint for storefront display
- */
-exports.getPricingHttp = functions.https.onRequest(async (req, res) => {
-    return corsHandler(req, res, async () => {
-        var _a;
-        try {
-            addSecurityHeaders(res);
-            // Only allow GET requests
-            if (req.method !== 'GET') {
-                res.status(405).json({ error: 'Method not allowed' });
-                return;
-            }
-            // Get early adopter count from Firestore
-            const statsDoc = await admin.firestore()
-                .collection('public')
-                .doc('stats')
-                .get();
-            const earlyAdoptersSold = statsDoc.exists ?
-                (((_a = statsDoc.data()) === null || _a === void 0 ? void 0 : _a.earlyAdoptersSold) || 0) : 0;
-            const pricingData = {
-                tiers: {
-                    free: {
-                        name: 'Free',
-                        price: 0,
-                        currency: 'USD',
-                        features: [
-                            '20 Memory Operations/month',
-                            '20 Execution Sandbox/month',
-                            'Single Project Support',
-                            'Basic VS Code Integration'
-                        ],
-                        limits: {
-                            memory: 20,
-                            execution: 20,
-                            projects: 1
-                        }
-                    },
-                    founders: {
-                        name: 'Founders Special',
-                        price: 59,
-                        currency: 'USD',
-                        features: [
-                            'UNLIMITED Memory & Execution',
-                            'Multi-Project Support',
-                            'Cloud Sync',
-                            'Priority Support',
-                            'Locked pricing forever'
-                        ],
-                        limits: {
-                            memory: -1, // Unlimited
-                            execution: -1, // Unlimited
-                            projects: -1 // Unlimited
-                        },
-                        maxLicenses: 10000,
-                        sold: earlyAdoptersSold
-                    },
-                    pro: {
-                        name: 'Pro',
-                        price: 199,
-                        currency: 'USD',
-                        features: [
-                            '2,000 Memory Operations/month',
-                            '2,000 Execution Sandbox/month',
-                            'Unlimited Projects',
-                            'Cloud Sync',
-                            'Standard Support'
-                        ],
-                        limits: {
-                            memory: 2000,
-                            execution: 2000,
-                            projects: -1 // Unlimited
-                        },
-                        available: false // Not available during Founders Special
-                    }
-                },
-                earlyAdoptersSold,
-                foundersRemaining: Math.max(0, 10000 - earlyAdoptersSold)
-            };
-            // Log successful pricing request (analytics)
-            console.log('📊 Pricing data requested', {
-                timestamp: new Date().toISOString(),
-                earlyAdoptersSold,
-                userAgent: req.get('User-Agent'),
-                ip: req.ip
-            });
-            res.status(200).json(pricingData);
-        }
-        catch (error) {
-            console.error('❌ Error in getPricingHttp:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    });
-});
-/**
- * Create Stripe Checkout Session
- * Secure payment processing with comprehensive validation
- */
-exports.createCheckout = functions.https.onCall(async (data, context) => {
-    var _a, _b, _c, _d, _e;
-    try {
-        // Input validation
-        if (!data || typeof data !== 'object') {
-            throw new functions.https.HttpsError('invalid-argument', 'Invalid request data');
-        }
-        // Security: validate no secrets in input
-        validateNoSecrets(data);
-        const { email, tier } = data;
-        // Validate required fields
-        if (!email || typeof email !== 'string') {
-            throw new functions.https.HttpsError('invalid-argument', 'Email is required and must be a string');
-        }
-        if (!tier || typeof tier !== 'string') {
-            throw new functions.https.HttpsError('invalid-argument', 'Tier is required and must be a string');
-        }
-        // Validate email format
-        if (!validateEmail(email)) {
-            throw new functions.https.HttpsError('invalid-argument', 'Invalid email format');
-        }
-        // Validate tier
-        const validTiers = ['founders', 'pro'];
-        if (!validTiers.includes(tier)) {
-            throw new functions.https.HttpsError('invalid-argument', `Invalid tier: ${tier}. Valid tiers: ${validTiers.join(', ')}`);
-        }
-        // Check if Founders Special is still available
-        if (tier === 'founders') {
-            const statsDoc = await admin.firestore()
-                .collection('public')
-                .doc('stats')
-                .get();
-            const earlyAdoptersSold = statsDoc.exists ?
-                (((_a = statsDoc.data()) === null || _a === void 0 ? void 0 : _a.earlyAdoptersSold) || 0) : 0;
-            if (earlyAdoptersSold >= 10000) {
-                throw new functions.https.HttpsError('failed-precondition', 'Founders Special is sold out. Please check back for Pro tier availability.');
-            }
-        }
-        // Get price ID from environment config
-        const priceId = tier === 'founders' ?
-            ((_b = functions.config().stripe) === null || _b === void 0 ? void 0 : _b.founders_price_id) || process.env.STRIPE_FOUNDERS_PRICE_ID :
-            ((_c = functions.config().stripe) === null || _c === void 0 ? void 0 : _c.pro_price_id) || process.env.STRIPE_PRO_PRICE_ID;
-        if (!priceId) {
-            console.error(`❌ Missing price ID for tier: ${tier}`);
-            throw new functions.https.HttpsError('internal', 'Payment configuration error. Please contact support.');
-        }
-        // Create Stripe Checkout Session
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'subscription',
-            customer_email: email,
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
-            success_url: `https://${((_d = functions.config().app) === null || _d === void 0 ? void 0 : _d.domain) || 'codecontextpro-mes.web.app'}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `https://${((_e = functions.config().app) === null || _e === void 0 ? void 0 : _e.domain) || 'codecontextpro-mes.web.app'}/?canceled=true`,
-            metadata: {
-                tier,
-                email,
-                created_by: 'codecontextpro-functions',
-                version: '1.0.0'
-            },
-            subscription_data: {
-                metadata: {
-                    tier,
-                    email,
-                    license_type: tier
-                }
-            }
-        });
-        // Log successful checkout creation (analytics)
-        console.log('✅ Checkout session created', {
-            sessionId: session.id,
-            email: email.substring(0, 3) + '***', // Partial email for privacy
-            tier,
-            timestamp: new Date().toISOString()
-        });
-        return {
-            sessionId: session.id,
-            url: session.url
-        };
-    }
-    catch (error) {
-        console.error('❌ Error in createCheckout:', error);
-        // Re-throw known errors
-        if (error instanceof functions.https.HttpsError) {
-            throw error;
-        }
-        // Handle Stripe errors
-        if (error instanceof Error && 'type' in error) {
-            throw new functions.https.HttpsError('internal', `Payment processing error: ${error.message}`);
-        }
-        // Generic error
-        throw new functions.https.HttpsError('internal', 'Failed to create checkout session');
-    }
-});
+// Removed getPricingHttp - storefront moved to Replit/Vercel
+// Removed createCheckout - storefront moved to Replit/Vercel
 /**
  * Stripe Webhook Handler
  * Process successful payments and activate licenses
  */
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
-    var _a;
+    var _a, _b;
     try {
         addSecurityHeaders(res);
         // Only allow POST requests
@@ -346,6 +130,17 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
             }
             // Create license record
             const licenseId = `license_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            // Generate userEncryptionKey (apiKey) using license.id + email + master key
+            const crypto = require('crypto');
+            const masterKey = ((_b = functions.config().encryption) === null || _b === void 0 ? void 0 : _b.master_key) || process.env.ENCRYPTION_MASTER_KEY;
+            if (!masterKey) {
+                console.error('❌ Missing ENCRYPTION_MASTER_KEY for license creation');
+                res.status(500).json({ error: 'Encryption configuration error' });
+                return;
+            }
+            // Derive user-specific encryption key (this becomes the apiKey)
+            const keyInput = `${licenseId}:${email}:${masterKey}`;
+            const apiKey = crypto.createHash('sha256').update(keyInput).digest('hex');
             const licenseData = {
                 id: licenseId,
                 email,
@@ -353,6 +148,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
                 status: 'active',
                 stripeSessionId: session.id,
                 stripeCustomerId: session.customer,
+                apiKey, // Store the userEncryptionKey as apiKey
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 activatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 features: tier === 'founders' ? [
@@ -385,13 +181,264 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
             }
-            console.log('✅ License created:', licenseId);
+            console.log('✅ License created with encryption key:', licenseId);
         }
         res.status(200).json({ received: true });
     }
     catch (error) {
         console.error('❌ Error in stripeWebhook:', error);
         res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+/**
+ * Validate License Function
+ * Verifies license validity and returns license data including apiKey
+ * Phase 2 Sprint 2.1: Core licensing validation
+ */
+exports.validateLicense = functions.https.onCall(async (data, context) => {
+    var _a;
+    try {
+        // Input validation
+        if (!data || typeof data !== 'object') {
+            throw new functions.https.HttpsError('invalid-argument', 'Invalid request data');
+        }
+        // Security: validate no secrets in input
+        validateNoSecrets(data);
+        const { licenseKey } = data;
+        // Validate required fields
+        if (!licenseKey || typeof licenseKey !== 'string') {
+            throw new functions.https.HttpsError('invalid-argument', 'License key is required and must be a string');
+        }
+        // Validate license key format (license_timestamp_randomstring)
+        const licenseKeyRegex = /^license_\d+_[a-z0-9]{9}$/;
+        if (!licenseKeyRegex.test(licenseKey)) {
+            throw new functions.https.HttpsError('invalid-argument', 'Invalid license key format');
+        }
+        // Query Firestore for license
+        const licenseDoc = await admin.firestore()
+            .collection('licenses')
+            .doc(licenseKey)
+            .get();
+        if (!licenseDoc.exists) {
+            console.log('❌ License not found:', licenseKey.substring(0, 12) + '***');
+            throw new functions.https.HttpsError('not-found', 'License key not found');
+        }
+        const licenseData = licenseDoc.data();
+        if (!licenseData) {
+            throw new functions.https.HttpsError('internal', 'License data corrupted');
+        }
+        // Check license status
+        if (licenseData.status !== 'active') {
+            console.log('❌ License inactive:', licenseKey.substring(0, 12) + '***', 'Status:', licenseData.status);
+            throw new functions.https.HttpsError('failed-precondition', `License is ${licenseData.status}. Please contact support.`);
+        }
+        // Generate userEncryptionKey if not exists (for backward compatibility)
+        let apiKey = licenseData.apiKey;
+        if (!apiKey) {
+            // Generate userEncryptionKey using license.id + email + master key
+            const crypto = require('crypto');
+            const masterKey = ((_a = functions.config().encryption) === null || _a === void 0 ? void 0 : _a.master_key) || process.env.ENCRYPTION_MASTER_KEY;
+            if (!masterKey) {
+                console.error('❌ Missing ENCRYPTION_MASTER_KEY');
+                throw new functions.https.HttpsError('internal', 'Encryption configuration error');
+            }
+            // Derive user-specific encryption key
+            const keyInput = `${licenseData.id}:${licenseData.email}:${masterKey}`;
+            apiKey = crypto.createHash('sha256').update(keyInput).digest('hex');
+            // Store the generated apiKey in license for future use
+            await admin.firestore()
+                .collection('licenses')
+                .doc(licenseKey)
+                .update({
+                apiKey,
+                apiKeyGeneratedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('✅ Generated apiKey for license:', licenseKey.substring(0, 12) + '***');
+        }
+        // Log successful license validation (analytics & security)
+        console.log('✅ License validated successfully', {
+            licenseId: licenseKey.substring(0, 12) + '***',
+            email: licenseData.email.substring(0, 3) + '***',
+            tier: licenseData.tier,
+            timestamp: new Date().toISOString()
+        });
+        // Return license data (excluding sensitive internal fields)
+        return {
+            licenseId: licenseData.id,
+            email: licenseData.email,
+            tier: licenseData.tier,
+            status: licenseData.status,
+            features: licenseData.features,
+            apiKey,
+            activatedAt: licenseData.activatedAt,
+            createdAt: licenseData.createdAt
+        };
+    }
+    catch (error) {
+        console.error('❌ Error in validateLicense:', error);
+        // Re-throw known errors
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        // Generic error
+        throw new functions.https.HttpsError('internal', 'License validation failed');
+    }
+});
+/**
+ * Get Authentication Token
+ * Generates custom Firebase Auth tokens for license holders
+ * Phase 2 Sprint 2.1: Enable authenticated access to user data
+ */
+exports.getAuthToken = functions.https.onCall(async (data, context) => {
+    try {
+        // Input validation
+        if (!data || typeof data !== 'object') {
+            throw new functions.https.HttpsError('invalid-argument', 'Invalid request data');
+        }
+        // Security: validate no secrets in input
+        validateNoSecrets(data);
+        const { licenseKey } = data;
+        // Validate required fields
+        if (!licenseKey || typeof licenseKey !== 'string') {
+            throw new functions.https.HttpsError('invalid-argument', 'License key is required and must be a string');
+        }
+        // Validate license key format (license_timestamp_randomstring)
+        const licenseKeyRegex = /^license_\d+_[a-z0-9]{9}$/;
+        if (!licenseKeyRegex.test(licenseKey)) {
+            throw new functions.https.HttpsError('invalid-argument', 'Invalid license key format');
+        }
+        // Query Firestore for license
+        const licenseDoc = await admin.firestore()
+            .collection('licenses')
+            .doc(licenseKey)
+            .get();
+        if (!licenseDoc.exists) {
+            console.log('❌ License not found for auth token:', licenseKey.substring(0, 12) + '***');
+            throw new functions.https.HttpsError('not-found', 'License key not found');
+        }
+        const licenseData = licenseDoc.data();
+        if (!licenseData) {
+            throw new functions.https.HttpsError('internal', 'License data corrupted');
+        }
+        // Check license status
+        if (licenseData.status !== 'active') {
+            console.log('❌ License inactive for auth token:', licenseKey.substring(0, 12) + '***', 'Status:', licenseData.status);
+            throw new functions.https.HttpsError('failed-precondition', `License is ${licenseData.status}. Cannot generate auth token.`);
+        }
+        // Create unique user ID based on license
+        const uid = `license_${licenseData.id.replace('license_', '')}`;
+        // Set custom claims based on license tier
+        const customClaims = {
+            licenseId: licenseData.id,
+            tier: licenseData.tier,
+            email: licenseData.email,
+            features: licenseData.features,
+            licenseStatus: licenseData.status
+        };
+        // Add tier-specific claims - NO FREE TIER
+        if (licenseData.tier === 'founders') {
+            customClaims.unlimitedMemory = true;
+            customClaims.unlimitedExecution = true;
+            customClaims.multiProject = true;
+            customClaims.cloudSync = true;
+            customClaims.prioritySupport = true;
+        }
+        else if (licenseData.tier === 'pro') {
+            customClaims.memoryLimit = 2000;
+            customClaims.executionLimit = 2000;
+            customClaims.multiProject = true;
+            customClaims.cloudSync = true;
+        }
+        else {
+            // Invalid tier - only paid tiers allowed
+            throw new functions.https.HttpsError('failed-precondition', 'Invalid license tier. Only paid licenses are supported.');
+        }
+        // Generate custom Firebase Auth token
+        const customToken = await admin.auth().createCustomToken(uid, customClaims);
+        // Log successful token generation (analytics & security)
+        console.log('✅ Auth token generated successfully', {
+            licenseId: licenseKey.substring(0, 12) + '***',
+            email: licenseData.email.substring(0, 3) + '***',
+            tier: licenseData.tier,
+            uid: uid,
+            timestamp: new Date().toISOString()
+        });
+        // Update license with last token generation time
+        await admin.firestore()
+            .collection('licenses')
+            .doc(licenseKey)
+            .update({
+            lastTokenGeneratedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return {
+            customToken,
+            uid,
+            tier: licenseData.tier,
+            features: licenseData.features
+        };
+    }
+    catch (error) {
+        console.error('❌ Error in getAuthToken:', error);
+        // Re-throw known errors
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        // Generic error
+        throw new functions.https.HttpsError('internal', 'Auth token generation failed');
+    }
+});
+/**
+ * Report Usage Function
+ * Securely track CLI usage for billing and analytics
+ * Phase 2 Sprint 2.1: Real usage tracking implementation
+ */
+exports.reportUsage = functions.https.onCall(async (data, context) => {
+    try {
+        // Input validation
+        if (!data || typeof data !== 'object') {
+            throw new functions.https.HttpsError('invalid-argument', 'Invalid request data');
+        }
+        // Security: validate no secrets in input
+        validateNoSecrets(data);
+        const { operation, metadata, projectId, timestamp, version } = data;
+        // Validate required fields
+        if (!operation || typeof operation !== 'string') {
+            throw new functions.https.HttpsError('invalid-argument', 'Operation is required and must be a string');
+        }
+        if (!timestamp || typeof timestamp !== 'string') {
+            throw new functions.https.HttpsError('invalid-argument', 'Timestamp is required and must be a string');
+        }
+        // Store usage data in Firestore
+        const usageRecord = {
+            operation: operation.trim(),
+            metadata: metadata || {},
+            projectId: projectId || 'unknown',
+            timestamp: admin.firestore.Timestamp.fromDate(new Date(timestamp)),
+            version: version || '1.0.0',
+            reportedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        // Store in Firestore under usage collection
+        await admin.firestore()
+            .collection('usage')
+            .add(usageRecord);
+        console.log('✅ Usage reported successfully', {
+            operation: operation.trim(),
+            projectId: projectId || 'unknown',
+            timestamp: timestamp
+        });
+        return {
+            success: true,
+            message: 'Usage reported successfully'
+        };
+    }
+    catch (error) {
+        console.error('❌ Error in reportUsage:', error);
+        // Re-throw known errors
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        // Generic error
+        throw new functions.https.HttpsError('internal', 'Usage reporting failed');
     }
 });
 //# sourceMappingURL=index.js.map

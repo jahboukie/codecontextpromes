@@ -6,6 +6,9 @@
  * with comprehensive data sanitization and validation
  */
 
+import { initializeApp, getApps } from 'firebase/app';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
+
 export interface UsageMetadata {
     [key: string]: any;
 }
@@ -21,13 +24,65 @@ export interface UsageReport {
 export class FirebaseService {
     private projectId: string;
     private apiEndpoint: string;
+    private app: any;
+    private functions: any;
 
     constructor() {
-        this.projectId = process.env.FIREBASE_PROJECT_ID || 'codecontextpro-mes';
+        this.projectId = process.env.FIREBASE_PROJECT_ID || 'codecontext-mes';
         this.apiEndpoint = `https://${this.projectId}.cloudfunctions.net`;
+        
+        // Initialize Firebase
+        this.initializeFirebase();
         
         // Validate configuration on initialization
         this.validateConfig();
+    }
+
+    /**
+     * Initialize Firebase App and Functions
+     */
+    private initializeFirebase(): void {
+        try {
+            // Firebase configuration - NO HARDCODED SECRETS
+            const firebaseConfig = {
+                apiKey: process.env.FIREBASE_API_KEY,
+                authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+                projectId: this.projectId,
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+                messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+                appId: process.env.FIREBASE_APP_ID
+            };
+
+            // Validate required configuration
+            const requiredFields = ['apiKey', 'authDomain', 'storageBucket', 'messagingSenderId', 'appId'] as const;
+            const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
+            
+            if (missingFields.length > 0) {
+                throw new Error(`Missing required Firebase configuration: ${missingFields.join(', ')}`);
+            }
+
+            // Initialize Firebase app if not already initialized
+            if (!getApps().length) {
+                this.app = initializeApp(firebaseConfig);
+            } else {
+                this.app = getApps()[0];
+            }
+
+            // Initialize Functions
+            this.functions = getFunctions(this.app);
+
+            // Connect to emulator if in development
+            if (process.env.NODE_ENV === 'development' && process.env.FIREBASE_EMULATOR === 'true') {
+                connectFunctionsEmulator(this.functions, 'localhost', 5001);
+                console.log('🔧 Connected to Firebase Functions emulator');
+            }
+
+            console.log('✅ Firebase initialized successfully');
+
+        } catch (error) {
+            console.error('❌ Firebase initialization failed:', error);
+            throw error;
+        }
     }
 
     /**
@@ -57,14 +112,24 @@ export class FirebaseService {
                 version: '1.0.0'
             };
 
-            // Phase 1: Mock the HTTP request (real implementation in Sprint 1.2)
-            console.log(`📊 Usage Report: ${operation}`);
-            console.log(`   Metadata: ${JSON.stringify(sanitizedMetadata)}`);
+            // Real usage reporting to Firebase Functions
+            console.log(`📊 Reporting usage: ${operation}`);
             
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            return true;
+            try {
+                // Call Firebase Functions for usage reporting
+                const reportUsageFunction = httpsCallable(this.functions, 'reportUsage');
+                await reportUsageFunction(usageReport);
+                
+                console.log('✅ Usage reported successfully');
+                return true;
+                
+            } catch (functionError) {
+                // Fallback: If Firebase function doesn't exist, log locally but don't fail
+                console.warn(`⚠️ Firebase usage reporting unavailable, logging locally:`, functionError);
+                console.log(`📊 Usage Report: ${operation}`);
+                console.log(`   Metadata: ${JSON.stringify(sanitizedMetadata)}`);
+                return true; // Don't fail the main operation
+            }
 
         } catch (error) {
             // Fire-and-forget: don't throw errors, just log warnings
@@ -135,12 +200,20 @@ export class FirebaseService {
      * Validate Firebase configuration
      */
     private validateConfig(): void {
-        const requiredVars = ['FIREBASE_PROJECT_ID'];
+        const requiredVars = [
+            'FIREBASE_PROJECT_ID',
+            'FIREBASE_API_KEY',
+            'FIREBASE_AUTH_DOMAIN',
+            'FIREBASE_STORAGE_BUCKET',
+            'FIREBASE_MESSAGING_SENDER_ID',
+            'FIREBASE_APP_ID'
+        ];
         const missing = requiredVars.filter(varName => !process.env[varName]);
 
         if (missing.length > 0) {
-            console.warn(`⚠️ Missing Firebase environment variables: ${missing.join(', ')}`);
-            console.warn('   Usage reporting will use mock mode');
+            console.error(`❌ Missing required Firebase environment variables: ${missing.join(', ')}`);
+            console.error('   Application cannot function without proper Firebase configuration');
+            throw new Error(`Missing Firebase configuration: ${missing.join(', ')}`);
         } else {
             console.log('✅ Firebase configuration validated');
         }
@@ -155,6 +228,43 @@ export class FirebaseService {
             apiEndpoint: this.apiEndpoint,
             configured: !!process.env.FIREBASE_PROJECT_ID
         };
+    }
+
+    /**
+     * Validate license with Firebase Functions
+     * Phase 2 Sprint 2.1: Real license validation implementation
+     */
+    async validateLicense(licenseKey: string): Promise<any> {
+        try {
+            // Input validation
+            if (!licenseKey || typeof licenseKey !== 'string') {
+                throw new Error('License key is required and must be a string');
+            }
+
+            console.log(`🔍 Calling Firebase validateLicense function...`);
+
+            // Call Firebase Functions using the SDK
+            const validateLicenseFunction = httpsCallable(this.functions, 'validateLicense');
+            const result = await validateLicenseFunction({ licenseKey });
+
+            if (!result.data) {
+                throw new Error('Invalid response from license validation');
+            }
+
+            console.log('✅ License validation successful');
+            return result.data;
+
+        } catch (error) {
+            console.error('❌ License validation failed:', error);
+            
+            // Handle Firebase Functions errors
+            if (error && typeof error === 'object' && 'code' in error) {
+                const firebaseError = error as any;
+                throw new Error(`License validation failed: ${firebaseError.message || firebaseError.code}`);
+            }
+            
+            throw error;
+        }
     }
 
     /**

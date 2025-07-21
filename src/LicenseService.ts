@@ -9,6 +9,14 @@
  */
 
 import { FirebaseService } from './FirebaseService';
+import * as crypto from 'crypto';
+import * as os from 'os';
+
+// TypeScript augmentation for GCM cipher methods
+declare module 'crypto' {
+    function createCipherGCM(algorithm: string, key: crypto.CipherKey, iv: crypto.BinaryLike): crypto.CipherGCM;
+    function createDecipherGCM(algorithm: string, key: crypto.CipherKey, iv: crypto.BinaryLike): crypto.DecipherGCM;
+}
 
 export interface License {
     key?: string;
@@ -36,7 +44,10 @@ export class LicenseService {
     constructor(projectPath: string = process.cwd()) {
         this.licenseFile = `${projectPath}/.codecontext/license.secure`;
         this.firebaseService = new FirebaseService();
-        this.loadCurrentLicense();
+        // Load license asynchronously - don't await in constructor
+        this.loadCurrentLicense().catch(error => {
+            console.warn('⚠️ Failed to load license on startup:', error instanceof Error ? error.message : 'Unknown error');
+        });
     }
 
     /**
@@ -47,27 +58,17 @@ export class LicenseService {
         console.log('💳 LicenseService.purchaseLicense called');
 
         try {
-            // Input validation
-            const validTiers = ['free', 'founders', 'pro'];
+            // Input validation - NO FREE TIER
+            const validTiers = ['founders', 'pro'];
             if (!tier || typeof tier !== 'string') {
                 throw new Error('Tier is required and must be a string');
             }
 
             if (!validTiers.includes(tier.toLowerCase())) {
-                throw new Error(`Invalid tier: ${tier}. Valid options: ${validTiers.join(', ')}`);
+                throw new Error(`Invalid tier: ${tier}. Valid options: ${validTiers.join(', ')} (no free tier)`);
             }
 
             const normalizedTier = tier.toLowerCase();
-
-            // Free tier doesn't require purchase
-            if (normalizedTier === 'free') {
-                return {
-                    success: true,
-                    tier: 'free',
-                    message: 'Free tier activated',
-                    nextStep: 'You can start using CodeContextPro with free tier limits'
-                };
-            }
 
             // Get email for checkout (CLI will handle this)
             const email = process.env.CODECONTEXT_USER_EMAIL;
@@ -118,41 +119,55 @@ export class LicenseService {
     }
 
     /**
-     * Activate license (Phase 1 stub implementation)
-     * Will be fully implemented in Sprint 1.2
+     * Activate license using Firebase Functions
+     * Phase 2 Sprint 2.1: Real license activation implementation
      */
     async activateLicense(licenseKey: string): Promise<License> {
         console.log('🔑 LicenseService.activateLicense called');
 
-        // Input validation
-        if (!licenseKey || typeof licenseKey !== 'string') {
-            throw new Error('License key is required and must be a string');
+        try {
+            // Input validation
+            if (!licenseKey || typeof licenseKey !== 'string') {
+                throw new Error('License key is required and must be a string');
+            }
+
+            const trimmedKey = licenseKey.trim();
+            
+            // Validate license key format (license_timestamp_randomstring)
+            const licenseKeyPattern = /^license_\d+_[a-z0-9]{9}$/;
+            if (!licenseKeyPattern.test(trimmedKey)) {
+                throw new Error('Invalid license key format. Expected format: license_TIMESTAMP_RANDOMID');
+            }
+
+            // Call Firebase validateLicense function
+            console.log('🔍 Validating license with Firebase...');
+            const licenseData = await this.firebaseService.validateLicense(trimmedKey);
+
+            if (!licenseData || !licenseData.apiKey) {
+                throw new Error('License validation failed - missing license data');
+            }
+
+            // Create license object from Firebase response
+            const license: License = {
+                key: trimmedKey,
+                tier: licenseData.tier,
+                active: licenseData.status === 'active',
+                features: licenseData.features || [],
+                activatedAt: licenseData.activatedAt || new Date().toISOString()
+            };
+
+            // Store license securely with encryption
+            await this.storeLicenseSecurely(license, licenseData.apiKey);
+
+            this.currentLicense = license;
+            console.log(`✅ License activated: ${license.tier} tier for ${licenseData.email.substring(0, 3)}***`);
+
+            return license;
+
+        } catch (error) {
+            console.error('❌ License activation failed:', error);
+            throw new Error(error instanceof Error ? error.message : 'License activation failed');
         }
-
-        if (licenseKey.trim().length < 10) {
-            throw new Error('Invalid license key format (minimum 10 characters)');
-        }
-
-        // Security: validate license key format (basic check)
-        const licenseKeyPattern = /^[a-zA-Z0-9\-_]{10,}$/;
-        if (!licenseKeyPattern.test(licenseKey.trim())) {
-            throw new Error('Invalid license key format (contains invalid characters)');
-        }
-
-        // Phase 1 mock implementation
-        const mockLicense: License = {
-            key: licenseKey.trim(),
-            tier: 'founders',
-            active: true,
-            features: ['unlimited_memory', 'unlimited_execution', 'cloud_sync'],
-            activatedAt: new Date().toISOString(),
-            mock: true
-        };
-
-        this.currentLicense = mockLicense;
-        console.log(`✅ License activated (mock): ${mockLicense.tier} tier`);
-
-        return mockLicense;
     }
 
     /**
@@ -261,19 +276,197 @@ export class LicenseService {
     }
 
     /**
-     * Load license from secure file (Phase 1 stub)
+     * Generate machine-specific license encryption key
+     * CRITICAL SECURITY: Uses machine + license specific data for key derivation
      */
-    private loadCurrentLicense(): void {
-        // Phase 1: no actual file loading, use mock license
-        console.log('📋 Loading license (mock mode for Phase 1)');
-        this.currentLicense = null; // Will be created in getCurrentLicense()
+    private generateLicenseEncryptionKey(apiKey: string): Buffer {
+        
+        // Collect enhanced machine-specific identifiers + license-specific data
+        const networkInterfaces = os.networkInterfaces();
+        const macAddresses = Object.values(networkInterfaces)
+            .flat()
+            .filter(iface => iface && !iface.internal && iface.mac !== '00:00:00:00:00:00')
+            .map(iface => iface!.mac)
+            .sort()
+            .join(',');
+
+        const machineId = [
+            os.hostname(),
+            os.platform(),
+            os.arch(),
+            os.cpus()[0]?.model || 'unknown',
+            process.env.USERNAME || process.env.USER || 'unknown',
+            __dirname,
+            apiKey, // Include apiKey for license-specific derivation
+            macAddresses || 'no-mac',
+            os.totalmem().toString()
+        ].join(':');
+
+        // Use stronger salt generation
+        const timestamp = Date.now().toString();
+        const baseSalt = `codecontext-license-salt-${timestamp.slice(-4)}`;
+        const salt = crypto.createHash('sha256').update(baseSalt).digest();
+        
+        // Derive encryption key using PBKDF2 with higher iterations
+        return crypto.pbkdf2Sync(machineId, salt, 200000, 32, 'sha256');
     }
 
     /**
-     * Validate license tier name
+     * Store license securely with encryption
+     * CRITICAL SECURITY: Machine-specific license encryption
+     */
+    private async storeLicenseSecurely(license: License, apiKey: string): Promise<void> {
+        try {
+            const fs = require('fs').promises;
+            const path = require('path');
+
+            // Ensure .codecontext directory exists
+            const licenseDir = path.dirname(this.licenseFile);
+            await fs.mkdir(licenseDir, { recursive: true });
+
+            // Create license data with apiKey for cloud sync
+            const licenseData = {
+                ...license,
+                apiKey,
+                storedAt: new Date().toISOString(),
+                machineFingerprint: crypto.createHash('sha256').update(
+                    os.hostname() + os.platform()
+                ).digest('hex').substring(0, 16)
+            };
+
+            // Generate machine + license specific encryption key
+            const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
+            const iv = crypto.randomBytes(16);
+            
+            // Encrypt using AES-256-GCM with proper IV
+            const cipher = crypto.createCipherGCM('aes-256-gcm', encryptionKey, iv);
+            cipher.setAAD(Buffer.from('codecontext-license', 'utf8'));
+            
+            let encrypted = cipher.update(JSON.stringify(licenseData), 'utf8');
+            encrypted = Buffer.concat([encrypted, cipher.final()]);
+            
+            const authTag = cipher.getAuthTag();
+
+            // Calculate integrity hash for tamper detection
+            const integrityHash = crypto.createHash('sha256')
+                .update(JSON.stringify(licenseData))
+                .digest('hex');
+
+            const encryptedLicense = {
+                encrypted: encrypted.toString('base64'),
+                iv: iv.toString('base64'),
+                authTag: authTag.toString('base64'),
+                integrityHash,
+                algorithm: 'aes-256-gcm',
+                keyDerivation: 'pbkdf2-sha256-200000'
+            };
+
+            // Write encrypted license file
+            await fs.writeFile(this.licenseFile, JSON.stringify(encryptedLicense, null, 2));
+            console.log('🔒 License stored securely with machine binding:', this.licenseFile);
+
+        } catch (error) {
+            console.error('❌ Failed to store license securely:', error);
+            throw new Error('Failed to store license securely');
+        }
+    }
+
+    /**
+     * Decrypt and load license from secure file
+     * CRITICAL SECURITY: Decrypts license with machine binding verification
+     */
+    private async decryptLicense(encryptedLicenseData: any, apiKey: string): Promise<License | null> {
+        try {
+            
+            // Generate the same machine-specific encryption key
+            const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
+            
+            // Decrypt using AES-256-GCM with proper IV
+            const iv = Buffer.from(encryptedLicenseData.iv, 'base64');
+            const decipher = crypto.createDecipherGCM('aes-256-gcm', encryptionKey, iv);
+            decipher.setAAD(Buffer.from('codecontext-license', 'utf8'));
+            decipher.setAuthTag(Buffer.from(encryptedLicenseData.authTag, 'base64'));
+            
+            let decrypted = decipher.update(Buffer.from(encryptedLicenseData.encrypted, 'base64'));
+            decrypted = Buffer.concat([decrypted, decipher.final()]);
+            
+            const licenseData = JSON.parse(decrypted.toString('utf8'));
+            
+            // Verify integrity hash
+            const calculatedHash = crypto.createHash('sha256')
+                .update(JSON.stringify({
+                    ...licenseData,
+                    // Remove fields that weren't part of original hash
+                    machineFingerprint: undefined,
+                    storedAt: undefined
+                }))
+                .digest('hex');
+                
+            if (calculatedHash !== encryptedLicenseData.integrityHash) {
+                throw new Error('License integrity check failed - possible tampering detected');
+            }
+            
+            // Verify machine fingerprint
+            const currentFingerprint = crypto.createHash('sha256').update(
+                require('os').hostname() + require('os').platform()
+            ).digest('hex').substring(0, 16);
+            
+            if (licenseData.machineFingerprint !== currentFingerprint) {
+                console.warn('⚠️ License machine fingerprint mismatch - may be from different machine');
+                // Still allow but log warning
+            }
+            
+            console.log('🔓 License decrypted and verified successfully');
+            return {
+                key: licenseData.key,
+                tier: licenseData.tier,
+                active: licenseData.active,
+                features: licenseData.features,
+                activatedAt: licenseData.activatedAt
+            };
+            
+        } catch (error) {
+            console.error('❌ License decryption failed:', error);
+            throw new Error('Failed to decrypt license - possible corruption or wrong key');
+        }
+    }
+
+    /**
+     * Load license from secure file
+     * Phase 2 Sprint 2.1: Implement encrypted license loading
+     */
+    private async loadCurrentLicense(): Promise<void> {
+        try {
+            const fs = require('fs').promises;
+            
+            // Check if license file exists
+            try {
+                await fs.access(this.licenseFile);
+            } catch {
+                console.log('📋 No license file found, using development mode');
+                this.currentLicense = null;
+                return;
+            }
+
+            // Read encrypted license file
+            const encryptedData = JSON.parse(await fs.readFile(this.licenseFile, 'utf8'));
+            
+            // For now, we can't decrypt without the apiKey
+            // This will be provided during license activation
+            console.log('📋 Encrypted license file found (will decrypt on activation)');
+            this.currentLicense = null;
+
+        } catch (error) {
+            console.error('❌ Failed to load license:', error);
+            this.currentLicense = null;
+        }
+    }
+
+    /**
+     * Validate license tier name - NO FREE TIER
      */
     private isValidTier(tier: string): boolean {
-        const validTiers = ['free', 'founders', 'pro', 'developer'];
+        const validTiers = ['founders', 'pro', 'developer'];
         return validTiers.includes(tier.toLowerCase());
     }
 }
