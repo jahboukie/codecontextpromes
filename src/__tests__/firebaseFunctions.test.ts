@@ -143,15 +143,19 @@ describe('Firebase Functions Security Validation', () => {
     });
 
     describe('Stripe integration security', () => {
-        it('should use environment variables for Stripe configuration', () => {
+        it('should use Firebase Functions idiomatic config pattern with fallbacks', () => {
             const indexPath = path.join(functionsPath, 'src', 'index.ts');
             const indexContent = fs.readFileSync(indexPath, 'utf8');
             
-            // Check for environment variable usage
-            expect(indexContent).toContain('functions.config().stripe?.secret_key');
-            expect(indexContent).toContain('process.env.STRIPE_SECRET_KEY');
-            expect(indexContent).toContain('functions.config().stripe?.webhook_secret');
-            expect(indexContent).toContain('process.env.STRIPE_WEBHOOK_SECRET');
+            // Check for idiomatic Firebase Functions configuration with process.env fallbacks
+            expect(indexContent).toContain('functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY');
+            expect(indexContent).toContain('functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET');
+            expect(indexContent).toContain('functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID');
+            expect(indexContent).toContain('functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID');
+            
+            // Check for Firebase Functions config pattern usage
+            expect(indexContent).toContain('functions.config().stripe');
+            expect(indexContent).toContain('functions.config().encryption');
             
             // Should not contain hardcoded keys
             expect(indexContent).not.toMatch(/sk_[a-zA-Z0-9_]{20,}/);
@@ -233,14 +237,19 @@ describe('Firebase Functions Security Validation', () => {
     });
 
     describe('Configuration and environment validation', () => {
-        it('should have proper fallback configurations', () => {
+        it('should have proper fallback configurations and error handling', () => {
             const indexPath = path.join(functionsPath, 'src', 'index.ts');
             const indexContent = fs.readFileSync(indexPath, 'utf8');
             
-            // Check for configuration fallbacks
+            // Check for Firebase Functions idiomatic configuration with fallbacks
+            expect(indexContent).toContain("functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || ''");
+            expect(indexContent).toContain('Missing signature or webhook secret');
+            expect(indexContent).toContain('Payment system configuration incomplete');
+            expect(indexContent).toContain('Critical configuration missing');
+            
+            // Should contain Firebase Functions config fallback pattern
             expect(indexContent).toContain('|| process.env.');
             expect(indexContent).toContain('functions.config()');
-            expect(indexContent).toContain('Payment configuration error');
         });
 
         it('should handle missing environment variables gracefully', () => {
@@ -251,6 +260,44 @@ describe('Firebase Functions Security Validation', () => {
             expect(indexContent).toContain('Missing signature or webhook secret');
             expect(indexContent).toContain('Missing price ID');
             expect(indexContent).toContain('Please contact support');
+        });
+
+        it('should validate security compliance - idiomatic Firebase patterns', () => {
+            const indexPath = path.join(functionsPath, 'src', 'index.ts');
+            const indexContent = fs.readFileSync(indexPath, 'utf8');
+            
+            // Security compliance: Idiomatic Firebase Functions config with fallbacks
+            expect(indexContent).toContain('functions.config().stripe');
+            expect(indexContent).toContain('functions.config().encryption');
+            
+            // Security compliance: Process.env fallbacks for local development
+            expect(indexContent).toContain('|| process.env.STRIPE_SECRET_KEY');
+            expect(indexContent).toContain('|| process.env.STRIPE_WEBHOOK_SECRET');
+            expect(indexContent).toContain('|| process.env.ENCRYPTION_MASTER_KEY');
+            
+            // Security compliance: Proper error handling when config vars are missing
+            expect(indexContent).toContain('!foundersPrice || !proPrice');
+            expect(indexContent).toContain('!sig || !webhookSecret');
+            expect(indexContent).toContain('!masterKey');
+            
+            // Security compliance: Configuration validation messages
+            expect(indexContent).toContain('Stripe price IDs not configured');
+            expect(indexContent).toContain('Missing ENCRYPTION_MASTER_KEY');
+        });
+
+        it('should implement proper environment variable validation patterns', () => {
+            const indexPath = path.join(functionsPath, 'src', 'index.ts');
+            const indexContent = fs.readFileSync(indexPath, 'utf8');
+            
+            // Check for proper Firebase Functions config pattern with process.env fallback
+            expect(indexContent).toContain('functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID');
+            expect(indexContent).toContain('functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID');
+            expect(indexContent).toContain('functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET');
+            expect(indexContent).toContain('functions.config().encryption?.master_key || process.env.ENCRYPTION_MASTER_KEY');
+            
+            // Check for proper error responses when env vars are missing
+            expect(indexContent).toContain('res.status(500).json');
+            expect(indexContent).toContain('Encryption configuration error');
         });
     });
 });

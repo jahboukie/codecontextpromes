@@ -14,10 +14,13 @@ import { Response } from 'express';
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Initialize Stripe with secret key from environment
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2023-10-16',
-});
+// Initialize Stripe with secret key from Firebase config (idiomatic pattern)
+const stripe = new Stripe(
+    functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || '',
+    {
+        apiVersion: '2023-10-16',
+    }
+);
 
 /**
  * CORS Handler with Security Restrictions
@@ -109,8 +112,8 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
             }
 
             // Validate pricing configuration per security specification
-            const foundersPrice = process.env.STRIPE_FOUNDERS_PRICE_ID;
-            const proPrice = process.env.STRIPE_PRO_PRICE_ID;
+            const foundersPrice = functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID;
+            const proPrice = functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID;
 
             if (!foundersPrice || !proPrice) {
                 console.error('❌ Critical configuration missing: Stripe price IDs not configured for pricing endpoint');
@@ -151,7 +154,7 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
                             'Forever pricing lock',
                             'Early adopter benefits'
                         ],
-                        stripePriceId: process.env.STRIPE_FOUNDERS_PRICE_ID
+                        stripePriceId: functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID
                     },
                     pro: {
                         name: 'Pro',
@@ -169,7 +172,7 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
                             '2,000 Execution Sandbox/month',
                             'Unlimited Projects'
                         ],
-                        stripePriceId: process.env.STRIPE_PRO_PRICE_ID
+                        stripePriceId: functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID
                     }
                 },
                 stats: {
@@ -245,8 +248,8 @@ export const createCheckout = functions.https.onRequest(async (req, res) => {
             }
 
             // Get price ID based on tier - NO HARDCODED VALUES per security spec
-            const foundersPrice = process.env.STRIPE_FOUNDERS_PRICE_ID;
-            const proPrice = process.env.STRIPE_PRO_PRICE_ID;
+            const foundersPrice = functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID;
+            const proPrice = functions.config().stripe?.pro_price_id || process.env.STRIPE_PRO_PRICE_ID;
 
             // Validate configuration exists per security specification
             if (!foundersPrice || !proPrice) {
@@ -330,7 +333,7 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
         }
 
         const sig = req.get('stripe-signature');
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        const webhookSecret = functions.config().stripe?.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET;
 
         if (!sig || !webhookSecret) {
             console.error('❌ Missing Stripe signature or webhook secret');
@@ -368,7 +371,7 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
             
             // Generate userEncryptionKey (apiKey) using license.id + email + master key
             const crypto = require('crypto');
-            const masterKey = process.env.ENCRYPTION_MASTER_KEY;
+            const masterKey = functions.config().encryption?.master_key || process.env.ENCRYPTION_MASTER_KEY;
             
             if (!masterKey) {
                 console.error('❌ Missing ENCRYPTION_MASTER_KEY for license creation');
@@ -507,7 +510,7 @@ export const validateLicense = functions.https.onCall(async (data, context) => {
         if (!apiKey) {
             // Generate userEncryptionKey using license.id + email + master key
             const crypto = require('crypto');
-            const masterKey = process.env.ENCRYPTION_MASTER_KEY;
+            const masterKey = functions.config().encryption?.master_key || process.env.ENCRYPTION_MASTER_KEY;
             
             if (!masterKey) {
                 console.error('❌ Missing ENCRYPTION_MASTER_KEY');

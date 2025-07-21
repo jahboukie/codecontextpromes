@@ -41,6 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reportUsage = exports.getAuthToken = exports.validateLicense = exports.stripeWebhook = exports.createCheckout = exports.getPricingHttp = void 0;
 const functions = __importStar(require("firebase-functions"));
@@ -49,8 +50,8 @@ const stripe_1 = __importDefault(require("stripe"));
 const cors = __importStar(require("cors"));
 // Initialize Firebase Admin
 admin.initializeApp();
-// Initialize Stripe with secret key from environment
-const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', {
+// Initialize Stripe with secret key from Firebase config (idiomatic pattern)
+const stripe = new stripe_1.default(((_a = functions.config().stripe) === null || _a === void 0 ? void 0 : _a.secret_key) || process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16',
 });
 /**
@@ -126,15 +127,15 @@ exports.getPricingHttp = functions.https.onRequest(async (req, res) => {
         addSecurityHeaders(res);
         // Apply CORS
         corsHandler(req, res, async () => {
-            var _a;
+            var _a, _b, _c, _d, _e;
             // Only allow GET requests
             if (req.method !== 'GET') {
                 res.status(405).json({ error: 'Method not allowed' });
                 return;
             }
             // Validate pricing configuration per security specification
-            const foundersPrice = process.env.STRIPE_FOUNDERS_PRICE_ID;
-            const proPrice = process.env.STRIPE_PRO_PRICE_ID;
+            const foundersPrice = ((_a = functions.config().stripe) === null || _a === void 0 ? void 0 : _a.founders_price_id) || process.env.STRIPE_FOUNDERS_PRICE_ID;
+            const proPrice = ((_b = functions.config().stripe) === null || _b === void 0 ? void 0 : _b.pro_price_id) || process.env.STRIPE_PRO_PRICE_ID;
             if (!foundersPrice || !proPrice) {
                 console.error('❌ Critical configuration missing: Stripe price IDs not configured for pricing endpoint');
                 console.error('💡 Configure via: firebase functions:config:set stripe.founders_price_id="your_id"');
@@ -150,7 +151,7 @@ exports.getPricingHttp = functions.https.onRequest(async (req, res) => {
                 .doc('stats')
                 .get();
             const earlyAdoptersSold = statsDoc.exists ?
-                (((_a = statsDoc.data()) === null || _a === void 0 ? void 0 : _a.earlyAdoptersSold) || 0) : 0;
+                (((_c = statsDoc.data()) === null || _c === void 0 ? void 0 : _c.earlyAdoptersSold) || 0) : 0;
             res.json({
                 pricing: {
                     founders: {
@@ -171,7 +172,7 @@ exports.getPricingHttp = functions.https.onRequest(async (req, res) => {
                             'Forever pricing lock',
                             'Early adopter benefits'
                         ],
-                        stripePriceId: process.env.STRIPE_FOUNDERS_PRICE_ID
+                        stripePriceId: ((_d = functions.config().stripe) === null || _d === void 0 ? void 0 : _d.founders_price_id) || process.env.STRIPE_FOUNDERS_PRICE_ID
                     },
                     pro: {
                         name: 'Pro',
@@ -189,7 +190,7 @@ exports.getPricingHttp = functions.https.onRequest(async (req, res) => {
                             '2,000 Execution Sandbox/month',
                             'Unlimited Projects'
                         ],
-                        stripePriceId: process.env.STRIPE_PRO_PRICE_ID
+                        stripePriceId: ((_e = functions.config().stripe) === null || _e === void 0 ? void 0 : _e.pro_price_id) || process.env.STRIPE_PRO_PRICE_ID
                     }
                 },
                 stats: {
@@ -214,7 +215,7 @@ exports.createCheckout = functions.https.onRequest(async (req, res) => {
         addSecurityHeaders(res);
         // Apply CORS
         corsHandler(req, res, async () => {
-            var _a;
+            var _a, _b, _c;
             // Only allow POST requests
             if (req.method !== 'POST') {
                 res.status(405).json({ error: 'Method not allowed' });
@@ -255,8 +256,8 @@ exports.createCheckout = functions.https.onRequest(async (req, res) => {
                 }
             }
             // Get price ID based on tier - NO HARDCODED VALUES per security spec
-            const foundersPrice = process.env.STRIPE_FOUNDERS_PRICE_ID;
-            const proPrice = process.env.STRIPE_PRO_PRICE_ID;
+            const foundersPrice = ((_b = functions.config().stripe) === null || _b === void 0 ? void 0 : _b.founders_price_id) || process.env.STRIPE_FOUNDERS_PRICE_ID;
+            const proPrice = ((_c = functions.config().stripe) === null || _c === void 0 ? void 0 : _c.pro_price_id) || process.env.STRIPE_PRO_PRICE_ID;
             // Validate configuration exists per security specification
             if (!foundersPrice || !proPrice) {
                 console.error('❌ Critical configuration missing: Stripe price IDs not configured');
@@ -323,6 +324,7 @@ exports.createCheckout = functions.https.onRequest(async (req, res) => {
  * Process successful payments and activate licenses
  */
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+    var _a, _b;
     try {
         addSecurityHeaders(res);
         // Only allow POST requests
@@ -331,7 +333,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
             return;
         }
         const sig = req.get('stripe-signature');
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        const webhookSecret = ((_a = functions.config().stripe) === null || _a === void 0 ? void 0 : _a.webhook_secret) || process.env.STRIPE_WEBHOOK_SECRET;
         if (!sig || !webhookSecret) {
             console.error('❌ Missing Stripe signature or webhook secret');
             res.status(400).json({ error: 'Missing signature or webhook secret' });
@@ -361,7 +363,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
             const licenseId = `license_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             // Generate userEncryptionKey (apiKey) using license.id + email + master key
             const crypto = require('crypto');
-            const masterKey = process.env.ENCRYPTION_MASTER_KEY;
+            const masterKey = ((_b = functions.config().encryption) === null || _b === void 0 ? void 0 : _b.master_key) || process.env.ENCRYPTION_MASTER_KEY;
             if (!masterKey) {
                 console.error('❌ Missing ENCRYPTION_MASTER_KEY for license creation');
                 res.status(500).json({ error: 'Encryption configuration error' });
@@ -425,6 +427,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
  * Phase 2 Sprint 2.1: Core licensing validation
  */
 exports.validateLicense = functions.https.onCall(async (data, context) => {
+    var _a;
     try {
         // Input validation
         if (!data || typeof data !== 'object') {
@@ -465,7 +468,7 @@ exports.validateLicense = functions.https.onCall(async (data, context) => {
         if (!apiKey) {
             // Generate userEncryptionKey using license.id + email + master key
             const crypto = require('crypto');
-            const masterKey = process.env.ENCRYPTION_MASTER_KEY;
+            const masterKey = ((_a = functions.config().encryption) === null || _a === void 0 ? void 0 : _a.master_key) || process.env.ENCRYPTION_MASTER_KEY;
             if (!masterKey) {
                 console.error('❌ Missing ENCRYPTION_MASTER_KEY');
                 throw new functions.https.HttpsError('internal', 'Encryption configuration error');
