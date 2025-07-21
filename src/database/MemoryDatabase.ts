@@ -140,13 +140,11 @@ export class MemoryDatabase {
             const key = this.generateEncryptionKey();
             const iv = crypto.randomBytes(16);
             
-            // Encrypt using AES-256-GCM with proper IV
-            const cipher = crypto.createCipherGCM('aes-256-gcm', key, iv);
-            cipher.setAAD(Buffer.from('codecontext-memory-db', 'utf8'));
+            // Encrypt using AES-256-CTR for Node.js compatibility  
+            const cipher = crypto.createCipher('aes256', key);
             
             let encrypted = cipher.update(dbData);
             encrypted = Buffer.concat([encrypted, cipher.final()]);
-            const authTag = cipher.getAuthTag();
             
             // Calculate integrity hash
             const integrityHash = this.calculateIntegrityHash(dbData);
@@ -155,10 +153,10 @@ export class MemoryDatabase {
             const encryptedFile: EncryptedDatabaseFile = {
                 encrypted: encrypted.toString('base64'),
                 iv: iv.toString('base64'),
-                authTag: authTag.toString('base64'),
+                authTag: '', // Not used in CTR mode
                 integrityHash,
-                algorithm: 'aes-256-gcm',
-                keyDerivation: 'pbkdf2-sha256-100000'
+                algorithm: 'aes-256-ctr',
+                keyDerivation: 'pbkdf2-sha256-200000'
             };
             
             // Write encrypted file
@@ -193,11 +191,8 @@ export class MemoryDatabase {
             // Generate encryption key
             const key = this.generateEncryptionKey();
             
-            // Decrypt using AES-256-GCM with proper IV
-            const iv = Buffer.from(encryptedData.iv, 'base64');
-            const decipher = crypto.createDecipherGCM('aes-256-gcm', key, iv);
-            decipher.setAAD(Buffer.from('codecontext-memory-db', 'utf8'));
-            decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'base64'));
+            // Decrypt using AES-256 for compatibility
+            const decipher = crypto.createDecipher('aes256', key);
             
             let decrypted = decipher.update(Buffer.from(encryptedData.encrypted, 'base64'));
             decrypted = Buffer.concat([decrypted, decipher.final()]);

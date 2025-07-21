@@ -23,7 +23,7 @@ const stripe = new Stripe(functions.config().stripe?.secret_key || process.env.S
  * CORS Handler with Security Restrictions
  * Only allows specific origins for enhanced security
  */
-const corsHandler = cors({
+const corsHandler = cors.default({
     origin: [
         'https://codecontextpro.com',
         'https://www.codecontextpro.com',
