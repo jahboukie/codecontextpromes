@@ -14,7 +14,7 @@ import { Response } from 'express';
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Initialize Stripe with secret key from Firebase config (idiomatic pattern)
+// Initialize Stripe with secret key from Firebase config (idiomatic v1 pattern)
 const stripe = new Stripe(
     functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || '',
     {
@@ -715,85 +715,3 @@ export const getAuthToken = functions.https.onCall(async (data, context) => {
     }
 });
 
-/**
- * Report Usage Function
- * Securely track CLI usage for billing and analytics
- * Phase 2 Sprint 2.1: Real usage tracking implementation
- */
-export const reportUsage = functions.https.onCall(async (data, context) => {
-    try {
-        // Input validation
-        if (!data || typeof data !== 'object') {
-            throw new functions.https.HttpsError(
-                'invalid-argument',
-                'Invalid request data'
-            );
-        }
-
-        // Security: validate no secrets in input
-        validateNoSecrets(data);
-
-        const { operation, metadata, projectId, timestamp, version } = (data as unknown) as {
-            operation: string;
-            metadata: any;
-            projectId: string;
-            timestamp: string;
-            version: string;
-        };
-
-        // Validate required fields
-        if (!operation || typeof operation !== 'string') {
-            throw new functions.https.HttpsError(
-                'invalid-argument',
-                'Operation is required and must be a string'
-            );
-        }
-
-        if (!timestamp || typeof timestamp !== 'string') {
-            throw new functions.https.HttpsError(
-                'invalid-argument',
-                'Timestamp is required and must be a string'
-            );
-        }
-
-        // Store usage data in Firestore
-        const usageRecord = {
-            operation: operation.trim(),
-            metadata: metadata || {},
-            projectId: projectId || 'unknown',
-            timestamp: admin.firestore.Timestamp.fromDate(new Date(timestamp)),
-            version: version || '1.0.0',
-            reportedAt: admin.firestore.FieldValue.serverTimestamp()
-        };
-
-        // Store in Firestore under usage collection
-        await admin.firestore()
-            .collection('usage')
-            .add(usageRecord);
-
-        console.log('✅ Usage reported successfully', {
-            operation: operation.trim(),
-            projectId: projectId || 'unknown',
-            timestamp: timestamp
-        });
-
-        return {
-            success: true,
-            message: 'Usage reported successfully'
-        };
-
-    } catch (error) {
-        console.error('❌ Error in reportUsage:', error);
-        
-        // Re-throw known errors
-        if (error instanceof functions.https.HttpsError) {
-            throw error;
-        }
-        
-        // Generic error
-        throw new functions.https.HttpsError(
-            'internal',
-            'Usage reporting failed'
-        );
-    }
-});

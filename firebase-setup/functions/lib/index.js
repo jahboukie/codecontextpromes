@@ -50,7 +50,7 @@ const stripe_1 = __importDefault(require("stripe"));
 const cors = __importStar(require("cors"));
 // Initialize Firebase Admin
 admin.initializeApp();
-// Initialize Stripe with secret key from Firebase config (idiomatic pattern)
+// Initialize Stripe with secret key from Firebase config (idiomatic v1 pattern)
 const stripe = new stripe_1.default(((_a = functions.config().stripe) === null || _a === void 0 ? void 0 : _a.secret_key) || process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16',
 });
