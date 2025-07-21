@@ -8,7 +8,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
-// Removed cors import - not needed for CLI backend
+import * as cors from 'cors';
 import { Response } from 'express';
 
 // Initialize Firebase Admin
@@ -17,6 +17,26 @@ admin.initializeApp();
 // Initialize Stripe with secret key from environment
 const stripe = new Stripe(functions.config().stripe?.secret_key || process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16',
+});
+
+/**
+ * CORS Handler with Security Restrictions
+ * Only allows specific origins for enhanced security
+ */
+const corsHandler = cors({
+    origin: [
+        'https://codecontextpro.com',
+        'https://www.codecontextpro.com',
+        'https://codecontextpro-mes.web.app',
+        'https://codecontextpro-mes.firebaseapp.com',
+        /\.codecontext\.pro$/,
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'http://localhost:5173',
+        'https://localhost:5000'
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200
 });
 
 /**
@@ -32,6 +52,19 @@ function addSecurityHeaders(res: Response): void {
         'Content-Security-Policy': "default-src 'self'",
         'Referrer-Policy': 'strict-origin-when-cross-origin'
     });
+}
+
+/**
+ * Email Validation Function
+ * Validates email format and security requirements
+ */
+function validateEmail(email: string): boolean {
+    if (!email || typeof email !== 'string') {
+        return false;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.length <= 255;
 }
 
 /**
@@ -58,9 +91,182 @@ function validateNoSecrets(data: any): void {
     }
 }
 
-// Removed getPricingHttp - storefront moved to Replit/Vercel
+/**
+ * Get Pricing HTTP Function
+ * Returns pricing information and early adopter stats
+ * Phase 1 Sprint 1.2: Basic pricing endpoint
+ */
+export const getPricingHttp = functions.https.onRequest(async (req, res) => {
+    try {
+        addSecurityHeaders(res);
+        
+        // Apply CORS
+        corsHandler(req, res, async () => {
+            // Only allow GET requests
+            if (req.method !== 'GET') {
+                res.status(405).json({ error: 'Method not allowed' });
+                return;
+            }
 
-// Removed createCheckout - storefront moved to Replit/Vercel
+            // Get early adopter count
+            const statsDoc = await admin.firestore()
+                .collection('public')
+                .doc('stats')
+                .get();
+                
+            const earlyAdoptersSold = statsDoc.exists ? 
+                (statsDoc.data()?.earlyAdoptersSold || 0) : 0;
+
+            res.json({
+                pricing: {
+                    free: {
+                        name: 'Free Tier',
+                        price: 0,
+                        limits: {
+                            recalls: 20,
+                            storage: 20,
+                            executions: 20
+                        }
+                    },
+                    founders: {
+                        name: 'Founders Special',
+                        price: 59,
+                        currency: 'USD',
+                        period: 'month',
+                        limits: {
+                            recalls: 'unlimited',
+                            storage: 'unlimited', 
+                            executions: 'unlimited'
+                        }
+                    }
+                },
+                stats: {
+                    earlyAdoptersSold,
+                    foundersRemaining: Math.max(0, 10000 - earlyAdoptersSold)
+                }
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Error in getPricingHttp:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * Create Checkout Session
+ * Creates Stripe checkout session for license purchase
+ * Phase 1 Sprint 1.2: Payment processing
+ */
+export const createCheckout = functions.https.onRequest(async (req, res) => {
+    try {
+        addSecurityHeaders(res);
+        
+        // Apply CORS
+        corsHandler(req, res, async () => {
+            // Only allow POST requests
+            if (req.method !== 'POST') {
+                res.status(405).json({ error: 'Method not allowed' });
+                return;
+            }
+
+            const { email, tier } = req.body;
+
+            // Validate required inputs
+            if (!email || typeof email !== 'string') {
+                res.status(400).json({ error: 'Email is required' });
+                return;
+            }
+
+            if (!tier || typeof tier !== 'string') {
+                res.status(400).json({ error: 'Tier is required' });
+                return;
+            }
+
+            // Validate email format
+            if (!validateEmail(email)) {
+                res.status(400).json({ error: 'Invalid email format' });
+                return;
+            }
+
+            // Security: validate no secrets in request
+            validateNoSecrets(req.body);
+
+            // Check early adopter limit for founders tier
+            if (tier === 'founders') {
+                const statsDoc = await admin.firestore()
+                    .collection('public')
+                    .doc('stats')
+                    .get();
+                    
+                const earlyAdoptersSold = statsDoc.exists ? 
+                    (statsDoc.data()?.earlyAdoptersSold || 0) : 0;
+                
+                if (earlyAdoptersSold >= 10000) {
+                    res.status(400).json({ 
+                        error: 'Founders Special is sold out',
+                        maxLicenses: 10000,
+                        currentCount: earlyAdoptersSold
+                    });
+                    return;
+                }
+            }
+
+            // Get price ID based on tier
+            const priceIds: Record<string, string> = {
+                founders: functions.config().stripe?.founders_price_id || process.env.STRIPE_FOUNDERS_PRICE_ID || 'price_founders_default'
+            };
+
+            const priceId = priceIds[tier];
+            if (!priceId) {
+                console.error('❌ Payment configuration error: Missing price ID for tier', tier);
+                res.status(400).json({ error: 'Missing price ID' });
+                return;
+            }
+
+            // Create Stripe checkout session
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: [{
+                    price: priceId,
+                    quantity: 1
+                }],
+                mode: 'subscription',
+                customer_email: email,
+                success_url: `${req.headers.origin || 'http://localhost:5000'}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${req.headers.origin || 'http://localhost:5000'}/`,
+                metadata: {
+                    tier,
+                    email,
+                    source: 'codecontextpro'
+                }
+            });
+
+            console.log('✅ Checkout session created', {
+                sessionId: session.id,
+                email: email.substring(0, 3) + '***',
+                tier,
+                timestamp: new Date().toISOString(),
+                ip: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+
+            res.json({
+                sessionId: session.id,
+                url: session.url
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Error in createCheckout:', error);
+        
+        if (error instanceof functions.https.HttpsError) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Please contact support' });
+        }
+    }
+});
 
 /**
  * Stripe Webhook Handler
