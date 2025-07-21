@@ -35,15 +35,16 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
         const MockedFirebaseServiceClass = FirebaseService as jest.MockedClass<typeof FirebaseService>;
         const mockFirebaseService = MockedFirebaseServiceClass.prototype;
         
-        // Default successful validation for most tests
+        // Default successful validation for most tests - matches production Firebase response
         mockFirebaseService.validateLicense = jest.fn().mockResolvedValue({
-            valid: true,
+            licenseId: 'license_1642764800000_abc123def',
             tier: 'founders',
             status: 'active',
-            features: ['unlimited_memory', 'unlimited_execution', 'cloud_sync'],
+            features: ['unlimited_memory', 'unlimited_execution', 'multi_project', 'cloud_sync'],
             activatedAt: new Date().toISOString(),
             email: 'test@example.com',
-            apiKey: 'mock_user_encryption_key'
+            apiKey: 'mock_user_encryption_key',
+            createdAt: new Date().toISOString()
         });
 
         mockFirebaseService.reportUsage = jest.fn().mockResolvedValue(true);
@@ -74,18 +75,22 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
         }
     });
 
-    afterEach(() => {
+    afterEach(async () => {
+        // Wait for file locks to release
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         mockExit.mockClear();
         // Clean up environment variables
         delete process.env.CODECONTEXT_USER_EMAIL;
     });
 
     describe('License purchasing with Firebase integration', () => {
-        it('should handle free tier activation', async () => {
+        it('should reject free tier for security (no free tier allowed)', async () => {
             const result = await service.purchaseLicense('free');
             
-            expect(result.success).toBe(false); // Updated to match actual behavior - no free tier
+            expect(result.success).toBe(false); // Security: No free tier
             expect(result.message).toContain('Invalid tier: free');
+            expect(result.message).toContain('Valid options: founders, pro (no free tier)');
         });
 
         it('should require email for paid tiers', async () => {
