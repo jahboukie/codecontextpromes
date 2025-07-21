@@ -108,6 +108,20 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
                 return;
             }
 
+            // Validate pricing configuration per security specification
+            const foundersPrice = process.env.STRIPE_FOUNDERS_PRICE_ID;
+            const proPrice = process.env.STRIPE_PRO_PRICE_ID;
+
+            if (!foundersPrice || !proPrice) {
+                console.error('❌ Critical configuration missing: Stripe price IDs not configured for pricing endpoint');
+                console.error('💡 Configure via: firebase functions:config:set stripe.founders_price_id="your_id"');
+                res.status(500).json({ 
+                    error: 'Pricing system configuration incomplete',
+                    message: 'Pricing temporarily unavailable - contact administrator' 
+                });
+                return;
+            }
+
             // Get early adopter count
             const statsDoc = await admin.firestore()
                 .collection('public')
@@ -137,7 +151,7 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
                             'Forever pricing lock',
                             'Early adopter benefits'
                         ],
-                        stripePriceId: 'price_1Rn9xXELGHd3NbdJcbNXl8bk'
+                        stripePriceId: process.env.STRIPE_FOUNDERS_PRICE_ID
                     },
                     pro: {
                         name: 'Pro',
@@ -155,7 +169,7 @@ export const getPricingHttp = functions.https.onRequest(async (req, res) => {
                             '2,000 Execution Sandbox/month',
                             'Unlimited Projects'
                         ],
-                        stripePriceId: 'price_1RnA4NELGHd3NbdJyONiR48N'
+                        stripePriceId: process.env.STRIPE_PRO_PRICE_ID
                     }
                 },
                 stats: {
@@ -230,15 +244,29 @@ export const createCheckout = functions.https.onRequest(async (req, res) => {
                 }
             }
 
-            // Get price ID based on tier
+            // Get price ID based on tier - NO HARDCODED VALUES per security spec
+            const foundersPrice = process.env.STRIPE_FOUNDERS_PRICE_ID;
+            const proPrice = process.env.STRIPE_PRO_PRICE_ID;
+
+            // Validate configuration exists per security specification
+            if (!foundersPrice || !proPrice) {
+                console.error('❌ Critical configuration missing: Stripe price IDs not configured');
+                console.error('💡 Configure via: firebase functions:config:set stripe.founders_price_id="your_id"');
+                res.status(500).json({ 
+                    error: 'Payment system configuration incomplete',
+                    message: 'Contact administrator - pricing not configured' 
+                });
+                return;
+            }
+
             const priceIds: Record<string, string> = {
-                founders: process.env.STRIPE_FOUNDERS_PRICE_ID || 'price_1Rn9xXELGHd3NbdJcbNXl8bk',
-                pro: process.env.STRIPE_PRO_PRICE_ID || 'price_1RnA4NELGHd3NbdJyONiR48N'
+                founders: foundersPrice,
+                pro: proPrice
             };
 
             const priceId = priceIds[tier];
             if (!priceId) {
-                console.error('❌ Payment configuration error: Missing price ID for tier', tier);
+                console.error('❌ Invalid tier requested:', tier);
                 res.status(400).json({ error: 'Missing price ID' });
                 return;
             }
