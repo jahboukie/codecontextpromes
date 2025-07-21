@@ -338,8 +338,8 @@ export class LicenseService {
             const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
             const iv = crypto.randomBytes(16);
             
-            // Encrypt using AES-256 (compatible cipher for Node.js)
-            const cipher = crypto.createCipher('aes256', encryptionKey);
+            // Encrypt using AES-256-CTR (compatible cipher for Node.js)
+            const cipher = crypto.createCipheriv('aes-256-ctr', encryptionKey, iv);
             
             let encrypted = cipher.update(JSON.stringify(licenseData), 'utf8', 'base64');
             encrypted += cipher.final('base64');
@@ -377,8 +377,9 @@ export class LicenseService {
             // Generate the same machine-specific encryption key
             const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
             
-            // Decrypt using AES-256 (compatible cipher for Node.js)
-            const decipher = crypto.createDecipher('aes256', encryptionKey);
+            // Decrypt using AES-256-CTR (compatible cipher for Node.js)
+            const iv = Buffer.from(encryptedLicenseData.iv, 'base64');
+            const decipher = crypto.createDecipheriv('aes-256-ctr', encryptionKey, iv);
             
             let decrypted = decipher.update(encryptedLicenseData.encrypted, 'base64', 'utf8');
             decrypted += decipher.final('utf8');

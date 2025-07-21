@@ -141,7 +141,7 @@ export class MemoryDatabase {
             const iv = crypto.randomBytes(16);
             
             // Encrypt using AES-256-CTR for Node.js compatibility  
-            const cipher = crypto.createCipher('aes256', key);
+            const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
             
             let encrypted = cipher.update(dbData);
             encrypted = Buffer.concat([encrypted, cipher.final()]);
@@ -191,8 +191,9 @@ export class MemoryDatabase {
             // Generate encryption key
             const key = this.generateEncryptionKey();
             
-            // Decrypt using AES-256 for compatibility
-            const decipher = crypto.createDecipher('aes256', key);
+            // Decrypt using AES-256-CTR for compatibility
+            const iv = Buffer.from(encryptedData.iv, 'base64');
+            const decipher = crypto.createDecipheriv('aes-256-ctr', key, iv);
             
             let decrypted = decipher.update(Buffer.from(encryptedData.encrypted, 'base64'));
             decrypted = Buffer.concat([decrypted, decipher.final()]);
