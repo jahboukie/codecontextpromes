@@ -772,14 +772,14 @@ export const getLicenseBySession = onRequest(
             addSecurityHeaders(res);
             
             corsHandler(req, res, async () => {
-                if (req.method \!== 'GET') {
+                if (req.method !== 'GET') {
                     res.status(405).json({ error: 'Method not allowed' });
                     return;
                 }
 
                 const sessionId = req.query.session_id as string;
 
-                if (\!sessionId || typeof sessionId \!== 'string') {
+                if (!sessionId || typeof sessionId !== 'string') {
                     res.status(400).json({ error: 'Session ID is required' });
                     return;
                 }
@@ -812,4 +812,3 @@ export const getLicenseBySession = onRequest(
         }
     }
 );
-EOF < /dev/null
