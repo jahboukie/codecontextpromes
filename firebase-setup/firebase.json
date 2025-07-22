@@ -32,6 +32,10 @@
         "function": "reportUsage"
       },
       {
+        "source": "/api/getLicenseBySession",
+        "function": "getLicenseBySession"
+      },
+      {
         "source": "/success.html",
         "destination": "/success.html"
       },

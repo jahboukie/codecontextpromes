@@ -760,3 +760,56 @@ export const reportUsage = onCall(async (data, context) => {
         );
     }
 });
+
+/**
+ * Get License by Session Function (v2)
+ * Retrieves license key for success page display
+ */
+export const getLicenseBySession = onRequest(
+    { secrets: [] },
+    async (req: Request, res: Response) => {
+        try {
+            addSecurityHeaders(res);
+            
+            corsHandler(req, res, async () => {
+                if (req.method \!== 'GET') {
+                    res.status(405).json({ error: 'Method not allowed' });
+                    return;
+                }
+
+                const sessionId = req.query.session_id as string;
+
+                if (\!sessionId || typeof sessionId \!== 'string') {
+                    res.status(400).json({ error: 'Session ID is required' });
+                    return;
+                }
+
+                // Query licenses by Stripe session ID
+                const licensesSnapshot = await admin.firestore()
+                    .collection('licenses')
+                    .where('stripeSessionId', '==', sessionId)
+                    .limit(1)
+                    .get();
+
+                if (licensesSnapshot.empty) {
+                    res.status(404).json({ error: 'License not found for session' });
+                    return;
+                }
+
+                const licenseDoc = licensesSnapshot.docs[0];
+                const licenseData = licenseDoc.data();
+
+                // Return only the license key (not sensitive data)
+                res.status(200).json({
+                    licenseKey: licenseDoc.id,
+                    tier: licenseData.tier,
+                    email: licenseData.email.substring(0, 3) + '***' // Partially masked
+                });
+            });
+        } catch (error) {
+            console.error('❌ Error in getLicenseBySession:', error);
+            res.status(500).json({ error: 'Failed to retrieve license' });
+        }
+    }
+);
+EOF < /dev/null
