@@ -56,12 +56,12 @@ export class LicenseService {
      * Purchase license with Firebase Functions integration
      * Phase 1 Sprint 1.2: Real Stripe checkout implementation
      */
-    async purchaseLicense(tier: string = 'founders'): Promise<PurchaseResult> {
+    async purchaseLicense(tier: string = 'memory'): Promise<PurchaseResult> {
         console.log('💳 LicenseService.purchaseLicense called');
 
         try {
             // Input validation - NO FREE TIER
-            const validTiers = ['founders', 'pro'];
+            const validTiers = ['memory'];
             if (!tier || typeof tier !== 'string') {
                 throw new Error('Tier is required and must be a string');
             }

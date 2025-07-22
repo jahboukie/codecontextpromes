@@ -1,0 +1,859 @@
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.error
+    ❌ Purchase error: Error: Invalid tier: free. Valid options: memory (no free tier)
+        at LicenseService.purchaseLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:70:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:96:42)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:316:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m 111 |[39m
+     [90m 112 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 113 |[39m             console[33m.[39merror([32m'❌ Purchase error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 114 |[39m             [36mreturn[39m {
+     [90m 115 |[39m                 success[33m:[39m [36mfalse[39m[33m,[39m
+     [90m 116 |[39m                 tier[33m,[39m[0m
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:113:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:96:42)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    📋 No encrypted database found, will create new one
+
+      at MemoryDatabase.decryptDatabaseFile (src/database/MemoryDatabase.ts:197:25)
+
+  console.log
+    ✅ Connected to encrypted SQLite database: C:\Users\scorp\codecontextmemory\.codecontext\memory.db
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:257:29)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    ✅ Database schema created successfully
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:350:25)
+
+  console.log
+    ✅ Memory engine initialized with SQLite database
+
+      at MemoryEngine.initialize (src/MemoryEngine.ts:67:21)
+
+  console.log
+    ✅ Memory stored with ID: 1
+
+      at Statement.<anonymous> (src/database/MemoryDatabase.ts:389:25)
+
+  console.log
+    ✅ Memory stored: [test] Test content...
+
+      at MemoryEngine.storeMemory (src/MemoryEngine.ts:117:21)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    ✅ Purchase initiated: memory tier for tes***
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:109:21)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    📋 No encrypted database found, will create new one
+
+      at MemoryDatabase.decryptDatabaseFile (src/database/MemoryDatabase.ts:197:25)
+
+  console.log
+    ✅ Connected to encrypted SQLite database: C:\Users\scorp\codecontextmemory\.codecontext\memory.db
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:257:29)
+
+  console.log
+    ✅ Database schema created successfully
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:350:25)
+
+  console.log
+    ✅ Memory engine initialized with SQLite database
+
+      at MemoryEngine.initialize (src/MemoryEngine.ts:67:21)
+
+  console.log
+    📋 No encrypted database found, will create new one
+
+      at MemoryDatabase.decryptDatabaseFile (src/database/MemoryDatabase.ts:197:25)
+
+  console.log
+    ✅ Connected to encrypted SQLite database: C:\Users\scorp\codecontextmemory\.codecontext\memory.db
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:257:29)
+
+  console.log
+    ✅ Database schema created successfully
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:350:25)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    ✅ Memory engine initialized with SQLite database
+
+      at MemoryEngine.initialize (src/MemoryEngine.ts:67:21)
+
+  console.log
+    📋 No encrypted database found, will create new one
+
+      at MemoryDatabase.decryptDatabaseFile (src/database/MemoryDatabase.ts:197:25)
+
+  console.log
+    ✅ Connected to encrypted SQLite database: C:\Users\scorp\codecontextmemory\.codecontext\memory.db
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:257:29)
+
+  console.log
+    ✅ Database schema created successfully
+
+      at Database.<anonymous> (src/database/MemoryDatabase.ts:350:25)
+
+  console.log
+    ✅ Memory engine initialized with SQLite database
+
+      at MemoryEngine.initialize (src/MemoryEngine.ts:67:21)
+
+  console.error
+    ❌ Purchase error: Error: Invalid tier: invalid-tier. Valid options: memory (no free tier)
+        at LicenseService.purchaseLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:70:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:126:34)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:316:40)
+        at _runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m 111 |[39m
+     [90m 112 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 113 |[39m             console[33m.[39merror([32m'❌ Purchase error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 114 |[39m             [36mreturn[39m {
+     [90m 115 |[39m                 success[33m:[39m [36mfalse[39m[33m,[39m
+     [90m 116 |[39m                 tier[33m,[39m[0m
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:113:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:126:34)
+
+  console.log
+    ✅ Search completed: "test query" - Found 0 results
+
+      at Statement.<anonymous> (src/database/MemoryDatabase.ts:470:25)
+
+  console.log
+    ✅ Search completed: "test query" - Found 0 results
+
+      at MemoryEngine.searchMemories (src/MemoryEngine.ts:157:21)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.error
+    ❌ Purchase error: Error: Tier is required and must be a string
+        at LicenseService.purchaseLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:66:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:131:34)
+
+    [0m [90m 111 |[39m
+     [90m 112 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 113 |[39m             console[33m.[39merror([32m'❌ Purchase error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 114 |[39m             [36mreturn[39m {
+     [90m 115 |[39m                 success[33m:[39m [36mfalse[39m[33m,[39m
+     [90m 116 |[39m                 tier[33m,[39m[0m
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:113:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:131:34)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: unlimited_memory = true
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: unlimited_execution = true
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: nonexistent_feature = false
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): remember
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): recall
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): execute
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    ✅ Purchase initiated: memory tier for tes***
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:109:21)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.warn
+    ⚠️ Usage reporting failed (non-blocking): Network error
+
+    [0m [90m 92 |[39m             } [36mcatch[39m (reportError) {
+     [90m 93 |[39m                 [90m// Ignore reporting errors - fire-and-forget[39m
+    [31m[1m>[22m[39m[90m 94 |[39m                 console[33m.[39mwarn([32m'⚠️ Usage reporting failed (non-blocking):'[39m[33m,[39m reportError [36minstanceof[39m [33mError[39m [33m?[39m reportError[33m.[39mmessage [33m:[39m [32m'Unknown error'[39m)[33m;[39m
+     [90m    |[39m                         [31m[1m^[22m[39m
+     [90m 95 |[39m             }
+     [90m 96 |[39m
+     [90m 97 |[39m             [90m// For Phase 1 Sprint 1.2, return checkout URL[39m[0m
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:94:25)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:144:28)
+
+  console.log
+    ✅ Purchase initiated: memory tier for tes***
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:109:21)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.error
+    ❌ Purchase error: Error: Invalid tier: invalid-tier. Valid options: memory (no free tier)
+        at LicenseService.purchaseLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:70:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\index.test.ts:246:53)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    [0m [90m 111 |[39m
+     [90m 112 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 113 |[39m             console[33m.[39merror([32m'❌ Purchase error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 114 |[39m             [36mreturn[39m {
+     [90m 115 |[39m                 success[33m:[39m [36mfalse[39m[33m,[39m
+     [90m 116 |[39m                 tier[33m,[39m[0m
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:113:21)
+      at Object.<anonymous> (src/__tests__/index.test.ts:246:53)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.log
+    🔍 Validating license with Firebase...
+
+      at LicenseService.activateLicense (src/LicenseService.ts:145:21)
+
+  console.log
+    ✅ License activated: memory tier for tes***
+
+      at LicenseService.activateLicense (src/LicenseService.ts:165:21)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.error
+    ❌ License activation failed: Error: License key is required and must be a string
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:133:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\index.test.ts:261:34)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/index.test.ts:261:34)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.error
+    ❌ License activation failed: Error: License key is required and must be a string
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:133:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:157:34)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:316:40)
+        at _runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:157:34)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.error
+    ❌ License activation failed: Error: Invalid license key format. Expected format: license_TIMESTAMP_RANDOMID
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:141:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\index.test.ts:265:34)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/index.test.ts:265:34)
+
+  console.error
+    ❌ License activation failed: Error: Invalid license key format. Expected format: license_TIMESTAMP_RANDOMID
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:141:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:161:34)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:161:34)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.error
+    ❌ License activation failed: Error: Invalid license key format. Expected format: license_TIMESTAMP_RANDOMID
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:141:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:165:34)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:165:34)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.warn
+    Test cleanup warning: Error: EBUSY: resource busy or locked, unlink 'C:\Users\scorp\codecontextmemory\.codecontext\memory.db'
+        at unlinkSync (node:fs:1952:11)
+        at _unlinkSync (node:internal/fs/rimraf:215:14)
+        at rimrafSync (node:internal/fs/rimraf:196:7)
+        at node:internal/fs/rimraf:254:9
+        at Array.forEach (<anonymous>)
+        at _rmdirSync (node:internal/fs/rimraf:251:7)
+        at rimrafSync (node:internal/fs/rimraf:194:7)
+        at Object.rmSync (node:fs:1247:10)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\index.test.ts:69:20)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusHook (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:281:40)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:154:7)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12) {
+      errno: -4082,
+      code: 'EBUSY',
+      syscall: 'unlink',
+      path: 'C:\\Users\\scorp\\codecontextmemory\\.codecontext\\memory.db'
+    }
+
+    [0m [90m 70 |[39m             } [36mcatch[39m (error) {
+     [90m 71 |[39m                 [90m// Ignore cleanup errors in CI/CD[39m
+    [31m[1m>[22m[39m[90m 72 |[39m                 console[33m.[39mwarn([32m'Test cleanup warning:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                         [31m[1m^[22m[39m
+     [90m 73 |[39m             }
+     [90m 74 |[39m         }
+     [90m 75 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (src/__tests__/index.test.ts:72:25)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.log
+    🔍 Validating license with Firebase...
+
+      at LicenseService.activateLicense (src/LicenseService.ts:145:21)
+
+  console.log
+    ✅ License activated: memory tier for tes***
+
+      at LicenseService.activateLicense (src/LicenseService.ts:165:21)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: unlimited_memory = true
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: unlimited_execution = true
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: debug_mode = true
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔍 Feature check: nonexistent_feature = false
+
+      at LicenseService.hasFeature (src/LicenseService.ts:213:17)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): remember
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): recall
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): execute
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    ✅ Operation allowed (development mode explicitly enabled): sync
+
+      at LicenseService.canPerformOperation (src/LicenseService.ts:235:21)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.error
+    ❌ Purchase error: Error: Tier is required and must be a string
+        at LicenseService.purchaseLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:66:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:230:34)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:316:40)
+        at _runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m 111 |[39m
+     [90m 112 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 113 |[39m             console[33m.[39merror([32m'❌ Purchase error:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 114 |[39m             [36mreturn[39m {
+     [90m 115 |[39m                 success[33m:[39m [36mfalse[39m[33m,[39m
+     [90m 116 |[39m                 tier[33m,[39m[0m
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:113:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:230:34)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.error
+    ❌ License activation failed: Error: License key is required and must be a string
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:133:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:235:34)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:235:34)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔑 LicenseService.activateLicense called
+
+      at LicenseService.activateLicense (src/LicenseService.ts:128:17)
+
+  console.error
+    ❌ License activation failed: Error: Invalid license key format. Expected format: license_TIMESTAMP_RANDOMID
+        at LicenseService.activateLicense (C:\Users\scorp\codecontextmemory\src\LicenseService.ts:141:23)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:244:34)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:316:40)
+        at _runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:252:3)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:126:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12)
+
+    [0m [90m 168 |[39m
+     [90m 169 |[39m         } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 170 |[39m             console[33m.[39merror([32m'❌ License activation failed:'[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 171 |[39m             [36mthrow[39m [36mnew[39m [33mError[39m(error [36minstanceof[39m [33mError[39m [33m?[39m error[33m.[39mmessage [33m:[39m [32m'License activation failed'[39m)[33m;[39m
+     [90m 172 |[39m         }
+     [90m 173 |[39m     }[0m
+
+      at LicenseService.activateLicense (src/LicenseService.ts:170:21)
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:244:34)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    🔧 Development mode: using mock developer license
+
+      at LicenseService.getCurrentLicense (src/LicenseService.ts:182:25)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    ✅ Purchase initiated: memory tier for tes***
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:109:21)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.log
+    💳 LicenseService.purchaseLicense called
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:60:17)
+
+  console.log
+    ✅ Purchase initiated: memory tier for ver***
+
+      at LicenseService.purchaseLicense (src/LicenseService.ts:109:21)
+
+  console.log
+    📋 No license file found
+
+      at LicenseService.loadCurrentLicense (src/LicenseService.ts:519:25)
+
+  console.warn
+    Test cleanup warning: Error: EBUSY: resource busy or locked, unlink 'C:\Users\scorp\codecontextmemory\.codecontext\memory.db'
+        at unlinkSync (node:fs:1952:11)
+        at _unlinkSync (node:internal/fs/rimraf:215:14)
+        at rimrafSync (node:internal/fs/rimraf:196:7)
+        at node:internal/fs/rimraf:254:9
+        at Array.forEach (<anonymous>)
+        at _rmdirSync (node:internal/fs/rimraf:251:7)
+        at rimrafSync (node:internal/fs/rimraf:194:7)
+        at Object.rmSync (node:fs:1247:10)
+        at Object.<anonymous> (C:\Users\scorp\codecontextmemory\src\__tests__\licenseService.test.ts:74:20)
+        at Promise.then.completed (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:298:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\utils.js:231:10)
+        at _callCircusHook (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:281:40)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:154:7)
+        at _runTestsForDescribeBlock (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:121:9)
+        at run (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\run.js:71:3)
+        at runAndTransformResultsToJestFormat (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+        at jestAdapter (C:\Users\scorp\codecontextmemory\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+        at runTestInternal (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:367:16)
+        at runTest (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\runTest.js:444:34)
+        at Object.worker (C:\Users\scorp\codecontextmemory\node_modules\jest-runner\build\testWorker.js:106:12) {
+      errno: -4082,
+      code: 'EBUSY',
+      syscall: 'unlink',
+      path: 'C:\\Users\\scorp\\codecontextmemory\\.codecontext\\memory.db'
+    }
+
+    [0m [90m 75 |[39m             } [36mcatch[39m (error) {
+     [90m 76 |[39m                 [90m// Ignore cleanup errors in CI/CD[39m
+    [31m[1m>[22m[39m[90m 77 |[39m                 console[33m.[39mwarn([32m'Test cleanup warning:'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m                         [31m[1m^[22m[39m
+     [90m 78 |[39m             }
+     [90m 79 |[39m         }
+     [90m 80 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (src/__tests__/licenseService.test.ts:77:25)
+
