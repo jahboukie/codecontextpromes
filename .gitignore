@@ -76,3 +76,6 @@ IMPORTANT_DOCS_NEVER_COMMIT/
 
 # Developer tools and CLI (local development only)
 claude-use-this/
+
+# Storefront (separate repository with own CI/CD pipeline)
+landing-page/
