@@ -38,11 +38,13 @@ export interface PurchaseResult {
 
 export class LicenseService {
     private licenseFile: string;
+    private apiKeyFile: string;
     private currentLicense: License | null = null;
     private firebaseService: FirebaseService;
 
     constructor(projectPath: string = process.cwd()) {
         this.licenseFile = `${projectPath}/.codecontext/license.secure`;
+        this.apiKeyFile = `${projectPath}/.codecontext/license.key.secure`;
         this.firebaseService = new FirebaseService();
         // Load license asynchronously - don't await in constructor
         this.loadCurrentLicense().catch(error => {
@@ -171,18 +173,23 @@ export class LicenseService {
     }
 
     /**
-     * Get current license (Phase 1 returns developer tier for development)
+     * Get current license - SECURITY: No mock licenses unless explicitly in development mode
      */
     getCurrentLicense(): License {
-        // Phase 1: return developer tier for active development
+        // SECURITY: Only allow mock license in explicit development mode
         if (!this.currentLicense) {
-            this.currentLicense = {
-                tier: 'developer',
-                active: true,
-                features: ['unlimited_memory', 'unlimited_execution', 'debug_mode'],
-                activatedAt: new Date().toISOString(),
-                mock: true
-            };
+            if (process.env.CODECONTEXT_DEV_MODE === 'true' && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Development mode: using mock developer license');
+                return {
+                    tier: 'developer',
+                    active: true,
+                    features: ['unlimited_memory', 'unlimited_execution', 'debug_mode'],
+                    activatedAt: new Date().toISOString(),
+                    mock: true
+                };
+            }
+            
+            throw new Error('No active license found. Please run: codecontext activate YOUR_LICENSE_KEY');
         }
 
         return this.currentLicense;
@@ -223,9 +230,9 @@ export class LicenseService {
             return false;
         }
 
-        // Phase 1: allow all operations during development
-        if (currentLicense.mock) {
-            console.log(`✅ Operation allowed (development mode): ${operation}`);
+        // SECURITY: Only allow development mode with explicit environment variables
+        if (process.env.CODECONTEXT_DEV_MODE === 'true' && process.env.NODE_ENV === 'development') {
+            console.log(`✅ Operation allowed (development mode explicitly enabled): ${operation}`);
             return true;
         }
 
@@ -324,10 +331,12 @@ export class LicenseService {
             const licenseDir = path.dirname(this.licenseFile);
             await fs.mkdir(licenseDir, { recursive: true });
 
-            // Create license data with apiKey for cloud sync
+            // SECURITY FIX: Store apiKey separately to avoid chicken-and-egg problem
+            await this.storeApiKeySecurely(apiKey);
+
+            // Create license data WITHOUT apiKey (stored separately)
             const licenseData = {
                 ...license,
-                apiKey,
                 storedAt: new Date().toISOString(),
                 machineFingerprint: crypto.createHash('sha256').update(
                     os.hostname() + os.platform()
@@ -364,6 +373,76 @@ export class LicenseService {
         } catch (error) {
             console.error('❌ Failed to store license securely:', error);
             throw new Error('Failed to store license securely');
+        }
+    }
+
+    /**
+     * Store API key securely with machine-specific encryption (separate from license)
+     * SECURITY FIX: Solves the chicken-and-egg problem for license decryption
+     */
+    private async storeApiKeySecurely(apiKey: string): Promise<void> {
+        try {
+            const fs = require('fs').promises;
+            
+            // Use a simpler, machine-bound key derivation for apiKey storage
+            const machineKey = crypto.createHash('sha256').update(
+                os.hostname() + os.platform() + os.arch() + 'codecontextpro-apikey'
+            ).digest();
+            
+            const iv = crypto.randomBytes(16);
+            const cipher = crypto.createCipheriv('aes-256-ctr', machineKey, iv);
+            
+            let encrypted = cipher.update(apiKey, 'utf8', 'base64');
+            encrypted += cipher.final('base64');
+            
+            const encryptedApiKey = {
+                encrypted,
+                iv: iv.toString('base64'),
+                algorithm: 'aes256-ctr',
+                keyDerivation: 'sha256-machine-bound'
+            };
+            
+            await fs.writeFile(this.apiKeyFile, JSON.stringify(encryptedApiKey, null, 2));
+            console.log('🔑 API key stored securely:', this.apiKeyFile);
+            
+        } catch (error) {
+            console.error('❌ Failed to store API key securely:', error);
+            throw new Error('Failed to store API key securely');
+        }
+    }
+
+    /**
+     * Load API key securely with machine-specific decryption
+     */
+    private async loadApiKeySecurely(): Promise<string> {
+        try {
+            const fs = require('fs').promises;
+            
+            // Check if API key file exists
+            try {
+                await fs.access(this.apiKeyFile);
+            } catch {
+                throw new Error('No API key file found - license needs to be activated');
+            }
+            
+            const encryptedData = JSON.parse(await fs.readFile(this.apiKeyFile, 'utf8'));
+            
+            // Use the same machine-bound key derivation
+            const machineKey = crypto.createHash('sha256').update(
+                os.hostname() + os.platform() + os.arch() + 'codecontextpro-apikey'
+            ).digest();
+            
+            const iv = Buffer.from(encryptedData.iv, 'base64');
+            const decipher = crypto.createDecipheriv('aes-256-ctr', machineKey, iv);
+            
+            let decrypted = decipher.update(encryptedData.encrypted, 'base64', 'utf8');
+            decrypted += decipher.final('utf8');
+            
+            return decrypted;
+            
+        } catch (error) {
+            console.error('❌ Failed to load API key:', error);
+            throw new Error('Failed to load API key - license may need to be re-activated');
         }
     }
 
@@ -427,7 +506,7 @@ export class LicenseService {
 
     /**
      * Load license from secure file
-     * Phase 2 Sprint 2.1: Implement encrypted license loading
+     * SECURITY FIX: Now properly decrypts license using stored apiKey
      */
     private async loadCurrentLicense(): Promise<void> {
         try {
@@ -437,18 +516,30 @@ export class LicenseService {
             try {
                 await fs.access(this.licenseFile);
             } catch {
-                console.log('📋 No license file found, using development mode');
+                console.log('📋 No license file found');
                 this.currentLicense = null;
                 return;
             }
 
-            // Read encrypted license file
-            const encryptedData = JSON.parse(await fs.readFile(this.licenseFile, 'utf8'));
-            
-            // For now, we can't decrypt without the apiKey
-            // This will be provided during license activation
-            console.log('📋 Encrypted license file found (will decrypt on activation)');
-            this.currentLicense = null;
+            // SECURITY FIX: Load apiKey first, then decrypt license
+            try {
+                const apiKey = await this.loadApiKeySecurely();
+                const encryptedData = JSON.parse(await fs.readFile(this.licenseFile, 'utf8'));
+                
+                // Decrypt the license using the loaded apiKey
+                this.currentLicense = await this.decryptLicense(encryptedData, apiKey);
+                
+                if (this.currentLicense) {
+                    console.log(`✅ License loaded successfully: ${this.currentLicense.tier} tier`);
+                } else {
+                    console.log('⚠️ License decryption returned null');
+                    this.currentLicense = null;
+                }
+                
+            } catch (apiKeyError) {
+                console.log('📋 Could not load API key - license needs re-activation');
+                this.currentLicense = null;
+            }
 
         } catch (error) {
             console.error('❌ Failed to load license:', error);

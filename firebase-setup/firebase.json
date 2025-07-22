@@ -1,4 +1,50 @@
 {
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/getPricing",
+        "function": "getPricingHttp"
+      },
+      {
+        "source": "/api/create-checkout", 
+        "function": "createCheckout"
+      },
+      {
+        "source": "/api/stripe-webhook",
+        "function": "stripeWebhook"
+      },
+      {
+        "source": "/api/validate-license",
+        "function": "validateLicense"
+      },
+      {
+        "source": "/api/auth-token",
+        "function": "getAuthToken"
+      },
+      {
+        "source": "/api/report-usage",
+        "function": "reportUsage"
+      },
+      {
+        "source": "/success.html",
+        "destination": "/success.html"
+      },
+      {
+        "source": "/cancel.html",
+        "destination": "/cancel.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "firestore": {
     "rules": "firestore/firestore.rules",
     "indexes": "firestore/firestore.indexes.json"

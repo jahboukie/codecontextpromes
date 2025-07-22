@@ -226,9 +226,9 @@ export class CodeContextCLI {
                 console.log(`   Email set to: ${options.email}`);
             }
 
-            // Validate tier
+            // Validate tier - REMOVED FREE TIER per business decision
             const tier = options.tier?.toLowerCase() || 'founders';
-            const validTiers = ['free', 'founders', 'pro'];
+            const validTiers = ['founders', 'pro'];
             
             if (!validTiers.includes(tier)) {
                 console.error(`❌ Invalid tier: ${tier}`);
