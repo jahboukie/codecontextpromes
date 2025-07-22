@@ -42,9 +42,9 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         const mockFirebaseService = MockedFirebaseService.prototype;
         mockFirebaseService.validateLicense = jest.fn().mockResolvedValue({
             valid: true,
-            tier: 'founders',
+            tier: 'memory',
             status: 'active',
-            features: ['unlimited_memory', 'unlimited_execution', 'cloud_sync'],
+            features: ['memory_recalls_5000', 'unlimited_projects', 'persistent_memory', 'cloud_sync'],
             activatedAt: new Date().toISOString(),
             email: 'test@example.com',
             apiKey: 'mock_user_encryption_key'
@@ -232,15 +232,15 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
 
         it('should validate purchase input', async () => {
             // Without email, should fail with error message
-            const resultWithoutEmail = await service.purchaseLicense('founders');
+            const resultWithoutEmail = await service.purchaseLicense('memory');
             expect(resultWithoutEmail.success).toBe(false);
             expect(resultWithoutEmail.message).toContain('Email required for checkout');
 
             // With email, should succeed
             process.env.CODECONTEXT_USER_EMAIL = 'test@example.com';
-            const resultWithEmail = await service.purchaseLicense('founders');
+            const resultWithEmail = await service.purchaseLicense('memory');
             expect(resultWithEmail.success).toBe(true);
-            expect(resultWithEmail.tier).toBe('founders');
+            expect(resultWithEmail.tier).toBe('memory');
 
             // Invalid tier should return error (not throw)
             const invalidTierResult = await service.purchaseLicense('invalid-tier');

@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reportUsage = exports.getAuthToken = exports.validateLicense = exports.stripeWebhook = exports.createCheckout = exports.getPricingHttp = void 0;
+exports.getLicenseBySession = exports.reportUsage = exports.getAuthToken = exports.validateLicense = exports.stripeWebhook = exports.createCheckout = exports.getPricingHttp = void 0;
 const admin = __importStar(require("firebase-admin"));
 const stripe_1 = __importDefault(require("stripe"));
 const cors = __importStar(require("cors"));
@@ -61,8 +61,7 @@ admin.initializeApp();
 // Define secrets using Firebase Secret Manager (v2 approach)
 const STRIPE_SECRET_KEY = (0, params_1.defineSecret)('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = (0, params_1.defineSecret)('STRIPE_WEBHOOK_SECRET');
-const FOUNDERS_PRICE_ID = (0, params_1.defineSecret)('FOUNDERS_PRICE_ID');
-const PRO_PRICE_ID = (0, params_1.defineSecret)('PRO_PRICE_ID');
+const MEMORY_PRICE_ID = (0, params_1.defineSecret)('MEMORY_PRICE_ID');
 const ENCRYPTION_MASTER_KEY = (0, params_1.defineSecret)('ENCRYPTION_MASTER_KEY');
 // Note: Stripe instances are created within functions to access secrets properly
 /**
@@ -128,76 +127,49 @@ function validateNoSecrets(data) {
 /**
  * Get Pricing HTTP Function (v2)
  */
-exports.getPricingHttp = (0, https_1.onRequest)({ secrets: [FOUNDERS_PRICE_ID, PRO_PRICE_ID] }, async (req, res) => {
+exports.getPricingHttp = (0, https_1.onRequest)({ secrets: [MEMORY_PRICE_ID] }, async (req, res) => {
     try {
         addSecurityHeaders(res);
         corsHandler(req, res, async () => {
-            var _a;
             if (req.method !== 'GET') {
                 res.status(405).json({ error: 'Method not allowed' });
                 return;
             }
             // Access secrets - fallback to env for local development
-            const foundersPrice = process.env.FOUNDERS_PRICE_ID || FOUNDERS_PRICE_ID.value();
-            const proPrice = process.env.PRO_PRICE_ID || PRO_PRICE_ID.value();
-            if (!foundersPrice || !proPrice) {
-                console.error('❌ Critical configuration missing: Stripe price IDs not configured');
+            const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
+            if (!memoryPrice) {
+                console.error('❌ Critical configuration missing: Stripe price ID not configured');
                 res.status(500).json({
                     error: 'Pricing system configuration incomplete',
                     message: 'Pricing temporarily unavailable - contact administrator'
                 });
                 return;
             }
-            const statsDoc = await admin.firestore()
-                .collection('public')
-                .doc('stats')
-                .get();
-            const earlyAdoptersSold = statsDoc.exists ?
-                (((_a = statsDoc.data()) === null || _a === void 0 ? void 0 : _a.earlyAdoptersSold) || 0) : 0;
             res.json({
                 pricing: {
-                    founders: {
-                        name: 'Founders Special',
-                        price: 59,
+                    memory: {
+                        name: 'Memory Pro',
+                        price: 19,
                         currency: 'USD',
                         period: 'month',
-                        description: 'Limited to 10,000 licenses - Forever pricing!',
+                        description: 'Building the Future Together - Support our API platform development',
                         limits: {
-                            memory: 'unlimited',
-                            projects: 'multi-project',
-                            executions: 'unlimited',
-                            maxLicenses: 10000
+                            memory: 5000,
+                            projects: 'unlimited',
+                            executions: 'coming-soon'
                         },
                         features: [
-                            'UNLIMITED Memory',
-                            'Multi-Project Support',
-                            'Forever pricing lock',
-                            'Early adopter benefits'
+                            '5,000 Memory Recalls/month',
+                            'Unlimited Projects',
+                            'Persistent AI Memory',
+                            'Support API Platform Development'
                         ],
-                        stripePriceId: foundersPrice
-                    },
-                    pro: {
-                        name: 'Pro',
-                        price: 99,
-                        currency: 'USD',
-                        period: 'month',
-                        description: 'Available after Founders Special',
-                        limits: {
-                            memory: 2000,
-                            executions: 2000,
-                            projects: 'unlimited'
-                        },
-                        features: [
-                            '2,000 Memory Operations/month',
-                            '2,000 Execution Sandbox/month',
-                            'Unlimited Projects'
-                        ],
-                        stripePriceId: proPrice
+                        stripePriceId: memoryPrice
                     }
                 },
-                stats: {
-                    earlyAdoptersSold,
-                    foundersRemaining: Math.max(0, 10000 - earlyAdoptersSold)
+                mission: {
+                    title: 'Building the Future Together',
+                    description: 'Every CLI subscription funds development of our open API platform, democratizing persistent AI memory for the entire industry.'
                 }
             });
         });
@@ -210,11 +182,10 @@ exports.getPricingHttp = (0, https_1.onRequest)({ secrets: [FOUNDERS_PRICE_ID, P
 /**
  * Create Checkout Session (v2)
  */
-exports.createCheckout = (0, https_1.onRequest)({ secrets: [STRIPE_SECRET_KEY, FOUNDERS_PRICE_ID, PRO_PRICE_ID] }, async (req, res) => {
+exports.createCheckout = (0, https_1.onRequest)({ secrets: [STRIPE_SECRET_KEY, MEMORY_PRICE_ID] }, async (req, res) => {
     try {
         addSecurityHeaders(res);
         corsHandler(req, res, async () => {
-            var _a;
             if (req.method !== 'POST') {
                 res.status(405).json({ error: 'Method not allowed' });
                 return;
@@ -233,28 +204,18 @@ exports.createCheckout = (0, https_1.onRequest)({ secrets: [STRIPE_SECRET_KEY, F
                 return;
             }
             validateNoSecrets(req.body);
-            // Check early adopter limit for founders tier
-            if (tier === 'founders') {
-                const statsDoc = await admin.firestore()
-                    .collection('public')
-                    .doc('stats')
-                    .get();
-                const earlyAdoptersSold = statsDoc.exists ?
-                    (((_a = statsDoc.data()) === null || _a === void 0 ? void 0 : _a.earlyAdoptersSold) || 0) : 0;
-                if (earlyAdoptersSold >= 10000) {
-                    res.status(400).json({
-                        error: 'Founders Special is sold out',
-                        maxLicenses: 10000,
-                        currentCount: earlyAdoptersSold
-                    });
-                    return;
-                }
+            // Validate tier (only 'memory' tier available now)
+            if (tier !== 'memory') {
+                res.status(400).json({
+                    error: 'Invalid tier. Only "memory" tier is available.',
+                    availableTiers: ['memory']
+                });
+                return;
             }
             // Access secrets with fallback for local development
-            const foundersPrice = process.env.FOUNDERS_PRICE_ID || FOUNDERS_PRICE_ID.value();
-            const proPrice = process.env.PRO_PRICE_ID || PRO_PRICE_ID.value();
-            if (!foundersPrice || !proPrice) {
-                console.error('❌ Critical configuration missing: Stripe price IDs not configured');
+            const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
+            if (!memoryPrice) {
+                console.error('❌ Critical configuration missing: Stripe price ID not configured');
                 res.status(500).json({
                     error: 'Payment system configuration incomplete',
                     message: 'Contact administrator - pricing not configured'
@@ -262,8 +223,7 @@ exports.createCheckout = (0, https_1.onRequest)({ secrets: [STRIPE_SECRET_KEY, F
                 return;
             }
             const priceIds = {
-                founders: foundersPrice,
-                pro: proPrice
+                memory: memoryPrice
             };
             const priceId = priceIds[tier];
             if (!priceId) {
@@ -368,18 +328,15 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
                 apiKey,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 activatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                features: tier === 'founders' ? [
-                    'unlimited_memory',
-                    'unlimited_execution',
-                    'multi_project',
-                    'cloud_sync',
-                    'priority_support',
-                    'locked_pricing'
-                ] : [
-                    'limited_memory_2000',
-                    'limited_execution_2000',
+                features: tier === 'memory' ? [
+                    'memory_recalls_5000',
                     'unlimited_projects',
+                    'persistent_memory',
                     'cloud_sync',
+                    'api_platform_support'
+                ] : [
+                    'basic_memory',
+                    'limited_projects',
                     'standard_support'
                 ]
             };
@@ -387,12 +344,14 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
                 .collection('licenses')
                 .doc(licenseId)
                 .set(licenseData);
-            if (tier === 'founders') {
+            // Update stats for memory tier subscriptions
+            if (tier === 'memory') {
                 await admin.firestore()
                     .collection('public')
                     .doc('stats')
                     .set({
-                    earlyAdoptersSold: admin.firestore.FieldValue.increment(1),
+                    memorySubscriptions: admin.firestore.FieldValue.increment(1),
+                    totalRevenue: admin.firestore.FieldValue.increment(19),
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
             }
@@ -522,21 +481,14 @@ exports.getAuthToken = (0, https_1.onCall)(async (data, context) => {
             features: licenseData.features,
             licenseStatus: licenseData.status
         };
-        if (licenseData.tier === 'founders') {
-            customClaims.unlimitedMemory = true;
-            customClaims.unlimitedExecution = true;
-            customClaims.multiProject = true;
+        if (licenseData.tier === 'memory') {
+            customClaims.memoryLimit = 5000;
+            customClaims.unlimitedProjects = true;
             customClaims.cloudSync = true;
-            customClaims.prioritySupport = true;
-        }
-        else if (licenseData.tier === 'pro') {
-            customClaims.memoryLimit = 2000;
-            customClaims.executionLimit = 2000;
-            customClaims.multiProject = true;
-            customClaims.cloudSync = true;
+            customClaims.apiPlatformSupport = true;
         }
         else {
-            throw new https_1.HttpsError('failed-precondition', 'Invalid license tier. Only paid licenses are supported.');
+            throw new https_1.HttpsError('failed-precondition', 'Invalid license tier. Only "memory" tier is currently supported.');
         }
         const customToken = await admin.auth().createCustomToken(uid, customClaims);
         console.log('✅ Auth token generated successfully', {
@@ -610,6 +562,48 @@ exports.reportUsage = (0, https_1.onCall)(async (data, context) => {
             throw error;
         }
         throw new https_1.HttpsError('internal', 'Usage reporting failed');
+    }
+});
+/**
+ * Get License by Session Function (v2)
+ * Retrieves license key for success page display
+ */
+exports.getLicenseBySession = (0, https_1.onRequest)({ secrets: [] }, async (req, res) => {
+    try {
+        addSecurityHeaders(res);
+        corsHandler(req, res, async () => {
+            if (req.method !== 'GET') {
+                res.status(405).json({ error: 'Method not allowed' });
+                return;
+            }
+            const sessionId = req.query.session_id;
+            if (!sessionId || typeof sessionId !== 'string') {
+                res.status(400).json({ error: 'Session ID is required' });
+                return;
+            }
+            // Query licenses by Stripe session ID
+            const licensesSnapshot = await admin.firestore()
+                .collection('licenses')
+                .where('stripeSessionId', '==', sessionId)
+                .limit(1)
+                .get();
+            if (licensesSnapshot.empty) {
+                res.status(404).json({ error: 'License not found for session' });
+                return;
+            }
+            const licenseDoc = licensesSnapshot.docs[0];
+            const licenseData = licenseDoc.data();
+            // Return only the license key (not sensitive data)
+            res.status(200).json({
+                licenseKey: licenseDoc.id,
+                tier: licenseData.tier,
+                email: licenseData.email.substring(0, 3) + '***' // Partially masked
+            });
+        });
+    }
+    catch (error) {
+        console.error('❌ Error in getLicenseBySession:', error);
+        res.status(500).json({ error: 'Failed to retrieve license' });
     }
 });
 //# sourceMappingURL=index.js.map

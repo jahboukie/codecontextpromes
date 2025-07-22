@@ -42,9 +42,9 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
         // Default successful validation for most tests - matches production Firebase response
         mockFirebaseService.validateLicense = jest.fn().mockResolvedValue({
             licenseId: 'license_1642764800000_abc123def',
-            tier: 'founders',
+            tier: 'memory',
             status: 'active',
-            features: ['unlimited_memory', 'unlimited_execution', 'multi_project', 'cloud_sync'],
+            features: ['memory_recalls_5000', 'unlimited_projects', 'persistent_memory', 'cloud_sync'],
             activatedAt: new Date().toISOString(),
             email: 'test@example.com',
             apiKey: 'mock_user_encryption_key',
@@ -97,28 +97,28 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             
             expect(result.success).toBe(false); // Security: No free tier
             expect(result.message).toContain('Invalid tier: free');
-            expect(result.message).toContain('Valid options: founders, pro (no free tier)');
+            expect(result.message).toContain('Valid options: memory (no free tier)');
         });
 
         it('should require email for paid tiers', async () => {
-            const result = await service.purchaseLicense('founders');
+            const result = await service.purchaseLicense('memory');
             
             expect(result.success).toBe(false);
-            expect(result.tier).toBe('founders');
+            expect(result.tier).toBe('memory');
             expect(result.message).toContain('Email required for checkout');
             expect(result.nextStep).toContain('Set email first');
         });
 
-        it('should generate checkout URL for founders tier with email', async () => {
+        it('should generate checkout URL for memory tier with email', async () => {
             process.env.CODECONTEXT_USER_EMAIL = 'test@example.com';
             
-            const result = await service.purchaseLicense('founders');
+            const result = await service.purchaseLicense('memory');
             
             expect(result.success).toBe(true);
-            expect(result.tier).toBe('founders');
+            expect(result.tier).toBe('memory');
             expect(result.message).toContain('checkout ready');
             expect(result.checkoutUrl).toContain('codecontextpro-mes.web.app');
-            expect(result.checkoutUrl).toContain('tier=founders');
+            expect(result.checkoutUrl).toContain('tier=memory');
             expect(result.checkoutUrl).toContain('email=test%40example.com');
         });
 
@@ -141,11 +141,11 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             const originalReportUsage = service['firebaseService']['reportUsage'];
             service['firebaseService']['reportUsage'] = jest.fn().mockRejectedValue(new Error('Network error'));
             
-            const result = await service.purchaseLicense('founders');
+            const result = await service.purchaseLicense('memory');
             
             // Should still succeed despite Firebase error (fire-and-forget)
             expect(result.success).toBe(true);
-            expect(result.tier).toBe('founders');
+            expect(result.tier).toBe('memory');
             
             // Restore original method
             service['firebaseService']['reportUsage'] = originalReportUsage;
@@ -177,7 +177,7 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             const result = await service.activateLicense(validKey);
             
             expect(result.active).toBe(true);
-            expect(result.tier).toBe('founders');
+            expect(result.tier).toBe('memory');
             expect(result.key).toBe(validKey);
         });
     });
@@ -274,12 +274,12 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             
             const reportUsageSpy = jest.spyOn(service['firebaseService'], 'reportUsage');
             
-            await service.purchaseLicense('founders');
+            await service.purchaseLicense('memory');
             
             expect(reportUsageSpy).toHaveBeenCalledWith(
                 'license_purchase_attempt',
                 expect.objectContaining({
-                    tier: 'founders',
+                    tier: 'memory',
                     email: 'tes***' // Privacy: partial email
                 })
             );
@@ -290,12 +290,12 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             
             const reportUsageSpy = jest.spyOn(service['firebaseService'], 'reportUsage');
             
-            await service.purchaseLicense('founders');
+            await service.purchaseLicense('memory');
             
             expect(reportUsageSpy).toHaveBeenCalledWith(
                 'license_purchase_attempt',
                 expect.objectContaining({
-                    tier: 'founders',
+                    tier: 'memory',
                     email: 'ver***' // Only first 3 characters
                 })
             );

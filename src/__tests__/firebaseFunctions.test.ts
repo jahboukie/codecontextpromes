@@ -150,8 +150,7 @@ describe('Firebase Functions Security Validation', () => {
             // Check for v2 Firebase Functions secret management with fallbacks
             expect(indexContent).toContain('process.env.STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.value()');
             expect(indexContent).toContain('process.env.STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.value()');
-            expect(indexContent).toContain('process.env.FOUNDERS_PRICE_ID || FOUNDERS_PRICE_ID.value()');
-            expect(indexContent).toContain('process.env.PRO_PRICE_ID || PRO_PRICE_ID.value()');
+            expect(indexContent).toContain('process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value()');
             
             // Check for v2 secret definitions
             expect(indexContent).toContain('defineSecret');
@@ -202,14 +201,15 @@ describe('Firebase Functions Security Validation', () => {
             expect(indexContent).toContain('FieldValue.increment(1)');
         });
 
-        it('should limit early adopter count properly', () => {
+        it('should implement memory tier subscription properly', () => {
             const indexPath = path.join(functionsPath, 'src', 'index.ts');
             const indexContent = fs.readFileSync(indexPath, 'utf8');
             
-            // Check for founders special limit
-            expect(indexContent).toContain('earlyAdoptersSold >= 10000');
-            expect(indexContent).toContain('Founders Special is sold out');
-            expect(indexContent).toContain('maxLicenses: 10000');
+            // Check for memory tier implementation
+            expect(indexContent).toContain('memory');
+            expect(indexContent).toContain('Memory Pro');
+            expect(indexContent).toContain('5000');
+            expect(indexContent).toContain('unlimited_projects');
         });
     });
 
@@ -276,12 +276,12 @@ describe('Firebase Functions Security Validation', () => {
             expect(indexContent).toContain('process.env.ENCRYPTION_MASTER_KEY ||');
             
             // Security compliance: Proper error handling when config vars are missing
-            expect(indexContent).toContain('!foundersPrice || !proPrice');
+            expect(indexContent).toContain('!memoryPrice');
             expect(indexContent).toContain('!sig || !webhookSecret');
             expect(indexContent).toContain('!masterKey');
             
             // Security compliance: Configuration validation messages
-            expect(indexContent).toContain('Stripe price IDs not configured');
+            expect(indexContent).toContain('Stripe price ID not configured');
             expect(indexContent).toContain('Missing ENCRYPTION_MASTER_KEY');
         });
 
@@ -290,8 +290,7 @@ describe('Firebase Functions Security Validation', () => {
             const indexContent = fs.readFileSync(indexPath, 'utf8');
             
             // Check for proper v2 Firebase Functions secret management with process.env fallback
-            expect(indexContent).toContain('process.env.FOUNDERS_PRICE_ID || FOUNDERS_PRICE_ID.value()');
-            expect(indexContent).toContain('process.env.PRO_PRICE_ID || PRO_PRICE_ID.value()');
+            expect(indexContent).toContain('process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value()');
             expect(indexContent).toContain('process.env.STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.value()');
             expect(indexContent).toContain('process.env.ENCRYPTION_MASTER_KEY || ENCRYPTION_MASTER_KEY.value()');
             

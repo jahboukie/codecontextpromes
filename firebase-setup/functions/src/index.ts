@@ -27,8 +27,7 @@ setGlobalOptions({
 // Define secrets using Firebase Secret Manager (v2 approach)
 const STRIPE_SECRET_KEY = defineSecret('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
-const FOUNDERS_PRICE_ID = defineSecret('FOUNDERS_PRICE_ID');
-const PRO_PRICE_ID = defineSecret('PRO_PRICE_ID');
+const MEMORY_PRICE_ID = defineSecret('MEMORY_PRICE_ID');
 const ENCRYPTION_MASTER_KEY = defineSecret('ENCRYPTION_MASTER_KEY');
 
 // Note: Stripe instances are created within functions to access secrets properly
@@ -106,7 +105,7 @@ function validateNoSecrets(data: any): void {
  * Get Pricing HTTP Function (v2)
  */
 export const getPricingHttp = onRequest(
-    { secrets: [FOUNDERS_PRICE_ID, PRO_PRICE_ID] },
+    { secrets: [MEMORY_PRICE_ID] },
     async (req: Request, res: Response) => {
         try {
             addSecurityHeaders(res);
@@ -118,11 +117,10 @@ export const getPricingHttp = onRequest(
                 }
 
                 // Access secrets - fallback to env for local development
-                const foundersPrice = process.env.FOUNDERS_PRICE_ID || FOUNDERS_PRICE_ID.value();
-                const proPrice = process.env.PRO_PRICE_ID || PRO_PRICE_ID.value();
+                const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
 
-                if (!foundersPrice || !proPrice) {
-                    console.error('❌ Critical configuration missing: Stripe price IDs not configured');
+                if (!memoryPrice) {
+                    console.error('❌ Critical configuration missing: Stripe price ID not configured');
                     res.status(500).json({ 
                         error: 'Pricing system configuration incomplete',
                         message: 'Pricing temporarily unavailable - contact administrator' 
@@ -130,58 +128,31 @@ export const getPricingHttp = onRequest(
                     return;
                 }
 
-                const statsDoc = await admin.firestore()
-                    .collection('public')
-                    .doc('stats')
-                    .get();
-                    
-                const earlyAdoptersSold = statsDoc.exists ? 
-                    (statsDoc.data()?.earlyAdoptersSold || 0) : 0;
-
                 res.json({
                     pricing: {
-                        founders: {
-                            name: 'Founders Special',
-                            price: 59,
+                        memory: {
+                            name: 'Memory Pro',
+                            price: 19,
                             currency: 'USD',
                             period: 'month',
-                            description: 'Limited to 10,000 licenses - Forever pricing!',
+                            description: 'Building the Future Together - Support our API platform development',
                             limits: {
-                                memory: 'unlimited',
-                                projects: 'multi-project',
-                                executions: 'unlimited',
-                                maxLicenses: 10000
+                                memory: 5000,
+                                projects: 'unlimited',
+                                executions: 'coming-soon'
                             },
                             features: [
-                                'UNLIMITED Memory',
-                                'Multi-Project Support',
-                                'Forever pricing lock',
-                                'Early adopter benefits'
+                                '5,000 Memory Recalls/month',
+                                'Unlimited Projects',
+                                'Persistent AI Memory',
+                                'Support API Platform Development'
                             ],
-                            stripePriceId: foundersPrice
-                        },
-                        pro: {
-                            name: 'Pro',
-                            price: 99,
-                            currency: 'USD',
-                            period: 'month',
-                            description: 'Available after Founders Special',
-                            limits: {
-                                memory: 2000,
-                                executions: 2000,
-                                projects: 'unlimited'
-                            },
-                            features: [
-                                '2,000 Memory Operations/month',
-                                '2,000 Execution Sandbox/month',
-                                'Unlimited Projects'
-                            ],
-                            stripePriceId: proPrice
+                            stripePriceId: memoryPrice
                         }
                     },
-                    stats: {
-                        earlyAdoptersSold,
-                        foundersRemaining: Math.max(0, 10000 - earlyAdoptersSold)
+                    mission: {
+                        title: 'Building the Future Together',
+                        description: 'Every CLI subscription funds development of our open API platform, democratizing persistent AI memory for the entire industry.'
                     }
                 });
             });
@@ -197,7 +168,7 @@ export const getPricingHttp = onRequest(
  * Create Checkout Session (v2)
  */
 export const createCheckout = onRequest(
-    { secrets: [STRIPE_SECRET_KEY, FOUNDERS_PRICE_ID, PRO_PRICE_ID] },
+    { secrets: [STRIPE_SECRET_KEY, MEMORY_PRICE_ID] },
     async (req: Request, res: Response) => {
         try {
             addSecurityHeaders(res);
@@ -227,32 +198,20 @@ export const createCheckout = onRequest(
 
                 validateNoSecrets(req.body);
 
-                // Check early adopter limit for founders tier
-                if (tier === 'founders') {
-                    const statsDoc = await admin.firestore()
-                        .collection('public')
-                        .doc('stats')
-                        .get();
-                        
-                    const earlyAdoptersSold = statsDoc.exists ? 
-                        (statsDoc.data()?.earlyAdoptersSold || 0) : 0;
-                    
-                    if (earlyAdoptersSold >= 10000) {
-                        res.status(400).json({ 
-                            error: 'Founders Special is sold out',
-                            maxLicenses: 10000,
-                            currentCount: earlyAdoptersSold
-                        });
-                        return;
-                    }
+                // Validate tier (only 'memory' tier available now)
+                if (tier !== 'memory') {
+                    res.status(400).json({ 
+                        error: 'Invalid tier. Only "memory" tier is available.',
+                        availableTiers: ['memory']
+                    });
+                    return;
                 }
 
                 // Access secrets with fallback for local development
-                const foundersPrice = process.env.FOUNDERS_PRICE_ID || FOUNDERS_PRICE_ID.value();
-                const proPrice = process.env.PRO_PRICE_ID || PRO_PRICE_ID.value();
+                const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
 
-                if (!foundersPrice || !proPrice) {
-                    console.error('❌ Critical configuration missing: Stripe price IDs not configured');
+                if (!memoryPrice) {
+                    console.error('❌ Critical configuration missing: Stripe price ID not configured');
                     res.status(500).json({ 
                         error: 'Payment system configuration incomplete',
                         message: 'Contact administrator - pricing not configured' 
@@ -261,8 +220,7 @@ export const createCheckout = onRequest(
                 }
 
                 const priceIds: Record<string, string> = {
-                    founders: foundersPrice,
-                    pro: proPrice
+                    memory: memoryPrice
                 };
 
                 const priceId = priceIds[tier];
@@ -395,18 +353,15 @@ export const stripeWebhook = onRequest(
                     apiKey,
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
                     activatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    features: tier === 'founders' ? [
-                        'unlimited_memory',
-                        'unlimited_execution', 
-                        'multi_project',
-                        'cloud_sync',
-                        'priority_support',
-                        'locked_pricing'
-                    ] : [
-                        'limited_memory_2000',
-                        'limited_execution_2000',
+                    features: tier === 'memory' ? [
+                        'memory_recalls_5000',
                         'unlimited_projects',
+                        'persistent_memory',
                         'cloud_sync',
+                        'api_platform_support'
+                    ] : [
+                        'basic_memory',
+                        'limited_projects',
                         'standard_support'
                     ]
                 };
@@ -416,12 +371,14 @@ export const stripeWebhook = onRequest(
                     .doc(licenseId)
                     .set(licenseData);
 
-                if (tier === 'founders') {
+                // Update stats for memory tier subscriptions
+                if (tier === 'memory') {
                     await admin.firestore()
                         .collection('public')
                         .doc('stats')
                         .set({
-                            earlyAdoptersSold: admin.firestore.FieldValue.increment(1),
+                            memorySubscriptions: admin.firestore.FieldValue.increment(1),
+                            totalRevenue: admin.firestore.FieldValue.increment(19),
                             lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
                 }
@@ -630,21 +587,15 @@ export const getAuthToken = onCall(
                 licenseStatus: licenseData.status
             };
 
-            if (licenseData.tier === 'founders') {
-                customClaims.unlimitedMemory = true;
-                customClaims.unlimitedExecution = true;
-                customClaims.multiProject = true;
+            if (licenseData.tier === 'memory') {
+                customClaims.memoryLimit = 5000;
+                customClaims.unlimitedProjects = true;
                 customClaims.cloudSync = true;
-                customClaims.prioritySupport = true;
-            } else if (licenseData.tier === 'pro') {
-                customClaims.memoryLimit = 2000;
-                customClaims.executionLimit = 2000;
-                customClaims.multiProject = true;
-                customClaims.cloudSync = true;
+                customClaims.apiPlatformSupport = true;
             } else {
                 throw new HttpsError(
                     'failed-precondition',
-                    'Invalid license tier. Only paid licenses are supported.'
+                    'Invalid license tier. Only "memory" tier is currently supported.'
                 );
             }
 
