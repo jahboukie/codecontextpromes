@@ -2,6 +2,19 @@
  * CodeContextPro-MES Memory Database
  * SQLite3-based persistent memory storage with security-first design
  * 
+ * Copyright (c) 2025 CodeContext Team. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - NOT LICENSED UNDER MIT
+ * This file contains proprietary intellectual property of CodeContext Team
+ * and is not licensed under the MIT License applicable to the CLI tool.
+ * 
+ * The algorithms, encryption methods, key derivation, and memory storage
+ * techniques contained herein are trade secrets and proprietary technology.
+ * 
+ * Unauthorized copying, redistribution, reverse engineering, or modification 
+ * of this file, via any medium, is strictly prohibited without express 
+ * written permission from CodeContext Team.
+ * 
  * Phase 1 Sprint 1.3: Real Database Implementation
  * Compatible with SQLite3 3.44.2 on Node.js 22+ Windows x64
  */

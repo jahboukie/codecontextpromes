@@ -2,6 +2,20 @@
  * CodeContextPro-MES Memory Engine
  * Security-first persistent memory implementation with SQLite database
  * 
+ * Copyright (c) 2025 CodeContext Team. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - NOT LICENSED UNDER MIT
+ * This file contains proprietary intellectual property of CodeContext Team
+ * and is not licensed under the MIT License applicable to the CLI tool.
+ * 
+ * The memory management algorithms, search optimization, and AI-context
+ * integration techniques contained herein are trade secrets and proprietary
+ * technology that power the CodeContextPro-MES service.
+ * 
+ * Unauthorized copying, redistribution, reverse engineering, or modification 
+ * of this file, via any medium, is strictly prohibited without express 
+ * written permission from CodeContext Team.
+ * 
  * Handles secure storage and retrieval of development context
  * with comprehensive input validation and secret detection
  * 
