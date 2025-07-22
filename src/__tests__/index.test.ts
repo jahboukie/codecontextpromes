@@ -198,7 +198,16 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
         let service: LicenseService;
 
         beforeEach(() => {
+            // Enable development mode for license tests
+            process.env.CODECONTEXT_DEV_MODE = 'true';
+            process.env.NODE_ENV = 'development';
             service = new LicenseService(testProjectPath);
+        });
+
+        afterEach(() => {
+            // Clean up environment variables
+            delete process.env.CODECONTEXT_DEV_MODE;
+            delete process.env.NODE_ENV;
         });
 
         it('should provide developer license for Phase 1', () => {

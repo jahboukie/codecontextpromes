@@ -22,6 +22,10 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
     let service: LicenseService;
 
     beforeEach(() => {
+        // Enable development mode for license tests
+        process.env.CODECONTEXT_DEV_MODE = 'true';
+        process.env.NODE_ENV = 'development';
+        
         // Set complete Firebase test environment
         process.env.FIREBASE_PROJECT_ID = 'test-project';
         process.env.FIREBASE_API_KEY = 'test-api-key';
@@ -76,6 +80,9 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
     });
 
     afterEach(async () => {
+        // Clean up development mode environment variables
+        delete process.env.CODECONTEXT_DEV_MODE;
+        delete process.env.NODE_ENV;
         // Wait for file locks to release
         await new Promise(resolve => setTimeout(resolve, 50));
         
