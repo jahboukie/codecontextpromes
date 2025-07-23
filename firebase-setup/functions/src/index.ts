@@ -117,7 +117,7 @@ export const getPricingHttp = onRequest(
                 }
 
                 // Access secrets - fallback to env for local development
-                const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
+                const memoryPrice = process.env.LOCAL_MEMORY_PRICE_ID || process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
 
                 if (!memoryPrice) {
                     console.error('❌ Critical configuration missing: Stripe price ID not configured');
@@ -208,7 +208,7 @@ export const createCheckout = onRequest(
                 }
 
                 // Access secrets with fallback for local development
-                const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
+                const memoryPrice = process.env.LOCAL_MEMORY_PRICE_ID || process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
 
                 if (!memoryPrice) {
                     console.error('❌ Critical configuration missing: Stripe price ID not configured');
@@ -232,7 +232,7 @@ export const createCheckout = onRequest(
 
                 // Initialize Stripe with the secret key
                 const stripeInstance = new Stripe(
-                    process.env.STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.value(),
+                    process.env.LOCAL_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.value(),
                     { apiVersion: '2023-10-16' }
                 );
 
@@ -295,7 +295,7 @@ export const stripeWebhook = onRequest(
             }
 
             const sig = req.get('stripe-signature');
-            const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.value();
+            const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.value()).trim();
 
             if (!sig || !webhookSecret) {
                 console.error('❌ Missing Stripe signature or webhook secret');

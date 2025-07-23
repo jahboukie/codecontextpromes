@@ -5,6 +5,10 @@
  * Launches the CLI application
  */
 
+// Load environment variables
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { main } from './index';
 
 // Set environment for CLI execution

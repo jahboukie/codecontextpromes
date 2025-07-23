@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeContextPro Documentation - CLI Commands & Setup</title>
+    <meta name="description" content="Complete guide to installing and using CodeContextPro CLI with persistent AI memory">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    
+    <style>
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+        .command {
+            color: #60a5fa;
+        }
+        .output {
+            color: #34d399;
+        }
+        .comment {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">🧠</span>
+                    <h1 class="text-2xl font-bold text-slate-900">CodeContextPro Documentation</h1>
+                </div>
+                <a href="/" class="text-blue-600 hover:text-blue-800 font-medium">← Back to Home</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Quick Start -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">🚀 Quick Start</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8">
+                <h3 class="text-lg font-semibold text-blue-900 mb-3">3-Step Setup</h3>
+                <ol class="list-decimal list-inside space-y-2 text-blue-800">
+                    <li><strong>Install</strong> the CLI globally via npm</li>
+                    <li><strong>Check status</strong> to see your current setup</li>
+                    <li><strong>Start using</strong> persistent AI memory commands</li>
+                </ol>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold mb-2">1. Install CodeContextPro CLI</h4>
+                    <div class="code-block">
+                        <span class="comment"># Install globally via npm</span><br>
+                        <span class="command">npm install -g codecontextpro-mes</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-2">2. Verify Installation</h4>
+                    <div class="code-block">
+                        <span class="command">codecontextpro status</span><br><br>
+                        <span class="output">✅ Firebase initialized successfully</span><br>
+                        <span class="output">📊 CodeContext Pro Status</span><br>
+                        <span class="output">🎫 License Status: DEVELOPER (if no license activated)</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-2">3. Activate Your License (After Purchase)</h4>
+                    <div class="code-block">
+                        <span class="comment"># Use the license key from your success page</span><br>
+                        <span class="command">codecontextpro purchase</span><br>
+                        <span class="comment"># Follow prompts to enter your license key</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Available Commands -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">📋 Available Commands</h2>
+
+            <!-- Status Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">📊</span>codecontextpro status
+                </h3>
+                <p class="text-gray-600 mb-4">Show your current license status, database location, and system health</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro status</span>
+                </div>
+                <div class="mt-3 text-sm text-gray-500">
+                    <strong>Use when:</strong> Checking if CLI is working, verifying license, troubleshooting
+                </div>
+            </div>
+
+            <!-- Remember Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">🧠</span>codecontextpro remember
+                </h3>
+                <p class="text-gray-600 mb-4">Store information in persistent AI memory for future recall</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro remember "User prefers React hooks over class components"</span><br><br>
+                    <span class="comment"># With context and type</span><br>
+                    <span class="command">codecontextpro remember "API uses JWT tokens" --context "auth-system" --type "technical"</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><code class="bg-gray-100 px-1 rounded">-c, --context &lt;context&gt;</code> - Context for the memory (default: "cli-command")</li>
+                        <li><code class="bg-gray-100 px-1 rounded">-t, --type &lt;type&gt;</code> - Type of memory (default: "general")</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Recall Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">🔍</span>codecontextpro recall
+                </h3>
+                <p class="text-gray-600 mb-4">Search and retrieve memories from your persistent storage</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro recall "React hooks"</span><br><br>
+                    <span class="comment"># Limit results</span><br>
+                    <span class="command">codecontextpro recall "authentication" --limit 5</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><code class="bg-gray-100 px-1 rounded">-l, --limit &lt;number&gt;</code> - Maximum number of results (default: 10)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Purchase Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">💳</span>codecontextpro purchase
+                </h3>
+                <p class="text-gray-600 mb-4">Purchase or activate a CodeContextPro license</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro purchase</span><br><br>
+                    <span class="comment"># With specific options</span><br>
+                    <span class="command">codecontextpro purchase --tier memory --email user@example.com</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><code class="bg-gray-100 px-1 rounded">-t, --tier &lt;tier&gt;</code> - License tier (default: "founders")</li>
+                        <li><code class="bg-gray-100 px-1 rounded">--email &lt;email&gt;</code> - Email for checkout</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Memory Tier Features -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">✨ Memory Tier Features</h2>
+            
+            <div class="bg-gradient-to-r from-blue-500 to-emerald-500 text-white rounded-xl p-8 mb-6">
+                <h3 class="text-2xl font-bold mb-4">$19/month - Memory Tier</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold mb-2">✅ Core Features</h4>
+                        <ul class="space-y-1 text-blue-100">
+                            <li>• 5,000 Memory Recalls/month</li>
+                            <li>• Unlimited Memory Storage</li>
+                            <li>• Unlimited Projects</li>
+                            <li>• AES-256 Encryption</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">🚀 Advanced Features</h4>
+                        <ul class="space-y-1 text-blue-100">
+                            <li>• Persistent Memory</li>
+                            <li>• Cloud Sync</li>
+                            <li>• API Platform Support</li>
+                            <li>• Priority Support</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Usage Examples -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">💡 Usage Examples</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="font-semibold mb-3 text-slate-800">🎯 Project Preferences</h3>
+                    <div class="code-block text-sm">
+                        <span class="command">codecontextpro remember "This project uses TypeScript strict mode"</span><br><br>
+                        <span class="command">codecontextpro remember "Database: PostgreSQL with Prisma ORM" --context "backend"</span><br><br>
+                        <span class="command">codecontextpro recall "database"</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="font-semibold mb-3 text-slate-800">🔧 Code Patterns</h3>
+                    <div class="code-block text-sm">
+                        <span class="command">codecontextpro remember "Error handling: Always use Result&lt;T, E&gt; pattern" --type "pattern"</span><br><br>
+                        <span class="command">codecontextpro remember "API responses wrapped in { success, data, error }" --context "api"</span><br><br>
+                        <span class="command">codecontextpro recall "error handling"</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="font-semibold mb-3 text-slate-800">🏗️ Architecture Decisions</h3>
+                    <div class="code-block text-sm">
+                        <span class="command">codecontextpro remember "Microservices communicate via message queues, not direct HTTP" --type "architecture"</span><br><br>
+                        <span class="command">codecontextpro recall "microservices"</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="font-semibold mb-3 text-slate-800">👥 Team Conventions</h3>
+                    <div class="code-block text-sm">
+                        <span class="command">codecontextpro remember "Team uses conventional commits format" --context "workflow"</span><br><br>
+                        <span class="command">codecontextpro remember "Code reviews require 2 approvals" --type "policy"</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">🔧 Troubleshooting</h2>
+            
+            <div class="space-y-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6">
+                    <h3 class="font-semibold text-yellow-800 mb-2">❌ Firebase initialization failed</h3>
+                    <p class="text-yellow-700 mb-3">Missing Firebase configuration or network issues</p>
+                    <div class="code-block">
+                        <span class="command">codecontextpro status</span><br>
+                        <span class="comment"># Check your network connection and try again</span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6">
+                    <h3 class="font-semibold text-blue-800 mb-2">📋 No license found</h3>
+                    <p class="text-blue-700 mb-3">CLI running in development mode</p>
+                    <div class="code-block">
+                        <span class="command">codecontextpro purchase</span><br>
+                        <span class="comment"># Enter your license key from the success page</span>
+                    </div>
+                </div>
+
+                <div class="bg-green-50 border-l-4 border-green-500 p-6">
+                    <h3 class="font-semibold text-green-800 mb-2">✅ System ready for development</h3>
+                    <p class="text-green-700">CLI is working correctly and ready to use</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Support -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">💬 Support</h2>
+            
+            <div class="bg-gray-100 rounded-lg p-8 text-center">
+                <h3 class="text-xl font-semibold mb-4">Need Help?</h3>
+                <p class="text-gray-600 mb-6">
+                    Our team is here to help you get the most out of CodeContextPro's persistent AI memory system.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                        Visit Homepage
+                    </a>
+                    <a href="#pricing" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                        Get Memory Tier
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-white py-8 mt-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <span class="text-2xl mr-3">🧠</span>
+                <span class="text-xl font-bold">CodeContextPro</span>
+            </div>
+            <p class="text-gray-400">
+                Revolutionary AI cognitive upgrade with persistent memory
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

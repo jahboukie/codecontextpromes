@@ -23,17 +23,50 @@
             </h1>
             
             <p class="text-gray-600 mb-6">
-                Welcome to CodeContextPro-MES! Your subscription has been activated and your license key will be sent to your email shortly.
+                Welcome to CodeContextPro-MES! Your subscription has been activated.
             </p>
+            
+            <!-- License Key Section -->
+            <div id="license-loading" class="bg-blue-50 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                    <span class="text-blue-800">Generating your license key...</span>
+                </div>
+            </div>
+            
+            <div id="license-section" class="bg-emerald-50 rounded-lg p-4 mb-6 text-left hidden">
+                <h3 class="font-semibold text-emerald-900 mb-3 flex items-center">
+                    <i data-lucide="key" class="w-4 h-4 mr-2"></i>
+                    Your License Key
+                </h3>
+                <div class="bg-white p-3 rounded border font-mono text-sm break-all mb-3" id="license-key">
+                    <!-- License key will be populated here -->
+                </div>
+                <p class="text-xs text-emerald-700">
+                    ⚠️ Save this key securely - you'll need it to activate the CLI
+                </p>
+            </div>
+            
+            <div id="license-error" class="bg-red-50 rounded-lg p-4 mb-6 text-left hidden">
+                <h3 class="font-semibold text-red-900 mb-2">License Generation Issue</h3>
+                <p class="text-sm text-red-800 mb-3">
+                    Your payment was successful, but we're still processing your license. 
+                    Please check your email in a few minutes or contact support.
+                </p>
+                <p class="text-xs text-red-700">
+                    Session ID: <span id="error-session-id"></span>
+                </p>
+            </div>
             
             <!-- Next Steps -->
             <div class="bg-blue-50 rounded-lg p-4 mb-6 text-left">
                 <h3 class="font-semibold text-blue-900 mb-2">Next Steps:</h3>
                 <ol class="text-sm text-blue-800 space-y-1">
-                    <li>1. Check your email for the license key</li>
+                    <li>1. Copy your license key above</li>
                     <li>2. Install the CLI: <code class="bg-blue-100 px-1 rounded">npm install -g codecontextpro</code></li>
-                    <li>3. Activate with your license key</li>
-                    <li>4. Start building with persistent AI memory!</li>
+                    <li>3. Run: <code class="bg-blue-100 px-1 rounded">codecontextpro init</code></li>
+                    <li>4. Paste your license key when prompted</li>
+                    <li>5. Start building with persistent AI memory!</li>
                 </ol>
             </div>
             
@@ -58,13 +91,74 @@
         // Initialize Lucide icons
         lucide.createIcons();
         
-        // Extract and display session ID from URL
+        // Extract session ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session_id');
         
+        // Display session ID for debugging
         if (sessionId) {
             document.getElementById('session-info').innerHTML = 
                 `Session ID: ${sessionId.substring(0, 20)}...`;
+        }
+        
+        // Fetch license key from Firebase function
+        async function fetchLicenseKey() {
+            if (!sessionId) {
+                showError('No session ID found in URL');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`https://us-central1-codecontextpro-mes.cloudfunctions.net/getLicenseBySession?session_id=${sessionId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.licenseKey) {
+                    showLicenseKey(data.licenseKey, data.tier, data.email);
+                } else {
+                    throw new Error('No license key in response');
+                }
+                
+            } catch (error) {
+                console.error('Error fetching license:', error);
+                showError(`Failed to retrieve license: ${error.message}`);
+            }
+        }
+        
+        function showLicenseKey(licenseKey, tier, email) {
+            // Hide loading, show license section
+            document.getElementById('license-loading').classList.add('hidden');
+            document.getElementById('license-section').classList.remove('hidden');
+            
+            // Display the license key
+            document.getElementById('license-key').textContent = licenseKey;
+            
+            // Update success message with details
+            const successMsg = document.querySelector('p.text-gray-600');
+            successMsg.innerHTML = `Welcome to CodeContextPro-MES! Your ${tier} subscription has been activated for ${email.substring(0, 3)}***.`;
+        }
+        
+        function showError(errorMessage) {
+            // Hide loading, show error section
+            document.getElementById('license-loading').classList.add('hidden');
+            document.getElementById('license-error').classList.remove('hidden');
+            
+            // Add error details
+            document.getElementById('error-session-id').textContent = sessionId || 'Not found';
+            
+            // Log error for debugging
+            console.error('License fetch error:', errorMessage);
+        }
+        
+        // Start fetching license key when page loads
+        if (sessionId) {
+            fetchLicenseKey();
+        } else {
+            showError('Missing session_id parameter in URL');
         }
     </script>
 </body>

@@ -136,7 +136,7 @@ exports.getPricingHttp = (0, https_1.onRequest)({ secrets: [MEMORY_PRICE_ID] }, 
                 return;
             }
             // Access secrets - fallback to env for local development
-            const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
+            const memoryPrice = process.env.LOCAL_MEMORY_PRICE_ID || process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
             if (!memoryPrice) {
                 console.error('❌ Critical configuration missing: Stripe price ID not configured');
                 res.status(500).json({
@@ -213,7 +213,7 @@ exports.createCheckout = (0, https_1.onRequest)({ secrets: [STRIPE_SECRET_KEY, M
                 return;
             }
             // Access secrets with fallback for local development
-            const memoryPrice = process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
+            const memoryPrice = process.env.LOCAL_MEMORY_PRICE_ID || process.env.MEMORY_PRICE_ID || MEMORY_PRICE_ID.value();
             if (!memoryPrice) {
                 console.error('❌ Critical configuration missing: Stripe price ID not configured');
                 res.status(500).json({
@@ -232,7 +232,7 @@ exports.createCheckout = (0, https_1.onRequest)({ secrets: [STRIPE_SECRET_KEY, M
                 return;
             }
             // Initialize Stripe with the secret key
-            const stripeInstance = new stripe_1.default(process.env.STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.value(), { apiVersion: '2023-10-16' });
+            const stripeInstance = new stripe_1.default(process.env.LOCAL_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.value(), { apiVersion: '2023-10-16' });
             const session = await stripeInstance.checkout.sessions.create({
                 payment_method_types: ['card'],
                 line_items: [{
@@ -284,7 +284,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
             return;
         }
         const sig = req.get('stripe-signature');
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.value();
+        const webhookSecret = (process.env.STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.value()).trim();
         if (!sig || !webhookSecret) {
             console.error('❌ Missing Stripe signature or webhook secret');
             res.status(400).json({ error: 'Missing signature or webhook secret' });
