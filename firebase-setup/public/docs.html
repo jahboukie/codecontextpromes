@@ -243,6 +243,91 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Scan Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">🔍</span>codecontextpro scan
+                </h3>
+                <p class="text-gray-600 mb-4">Analyze and store insights about your codebase structure</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro scan</span><br><br>
+                    <span class="comment"># Deep analysis with detailed insights</span><br>
+                    <span class="command">codecontextpro scan --deep</span><br><br>
+                    <span class="output">🔍 Scanning project structure...</span><br>
+                    <span class="output">✅ Found 15 TypeScript files, 8 React components</span><br>
+                    <span class="output">💾 Stored architectural insights in memory</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><code class="bg-gray-100 px-1 rounded">--deep</code> - Perform deep analysis with detailed architectural insights</li>
+                        <li><code class="bg-gray-100 px-1 rounded">--context &lt;context&gt;</code> - Add context tag to scan results</li>
+                    </ul>
+                </div>
+                <div class="mt-3 text-sm text-gray-500">
+                    <strong>Use when:</strong> Starting work on a new project or after major structural changes
+                </div>
+            </div>
+
+            <!-- Export Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">📦</span>codecontextpro export
+                </h3>
+                <p class="text-gray-600 mb-4">Export your memory database to JSON or Markdown format</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro export</span><br><br>
+                    <span class="comment"># Export to specific format</span><br>
+                    <span class="command">codecontextpro export --format json --output memories.json</span><br><br>
+                    <span class="command">codecontextpro export --format markdown --output project-memories.md</span><br><br>
+                    <span class="output">📦 Exporting 247 memories...</span><br>
+                    <span class="output">✅ Export complete: memories.json (15.2 KB)</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><code class="bg-gray-100 px-1 rounded">--format &lt;format&gt;</code> - Export format: json, markdown (default: json)</li>
+                        <li><code class="bg-gray-100 px-1 rounded">--output &lt;file&gt;</code> - Output filename (default: memories.[format])</li>
+                        <li><code class="bg-gray-100 px-1 rounded">--context &lt;context&gt;</code> - Export only memories with specific context</li>
+                    </ul>
+                </div>
+                <div class="mt-3 text-sm text-gray-500">
+                    <strong>Use when:</strong> Backing up memories, sharing project knowledge, or documentation
+                </div>
+            </div>
+
+            <!-- Sync Command -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-3 text-slate-800">
+                    <span class="text-2xl mr-2">☁️</span>codecontextpro sync
+                </h3>
+                <p class="text-gray-600 mb-4">Synchronize memories with cloud storage (Memory Tier feature)</p>
+                <div class="code-block">
+                    <span class="command">codecontextpro sync</span><br><br>
+                    <span class="comment"># Force sync even if no changes detected</span><br>
+                    <span class="command">codecontextpro sync --force</span><br><br>
+                    <span class="output">☁️ Syncing with cloud storage...</span><br>
+                    <span class="output">↑ Uploading 12 new memories...</span><br>
+                    <span class="output">↓ Downloading 3 updates...</span><br>
+                    <span class="output">✅ Sync complete - 247 memories synchronized</span>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><code class="bg-gray-100 px-1 rounded">--force</code> - Force sync even if no changes detected</li>
+                        <li><code class="bg-gray-100 px-1 rounded">--dry-run</code> - Show what would be synced without making changes</li>
+                    </ul>
+                </div>
+                <div class="mt-3 text-sm text-gray-500">
+                    <strong>Use when:</strong> Working across multiple devices or sharing with team members
+                </div>
+                <div class="mt-3 bg-blue-50 border border-blue-200 rounded p-3">
+                    <p class="text-sm text-blue-800">
+                        <strong>💎 Memory Tier Feature:</strong> Cloud sync requires an active Memory Tier subscription
+                    </p>
+                </div>
+            </div>
         </section>
 
         <!-- Memory Tier Features -->

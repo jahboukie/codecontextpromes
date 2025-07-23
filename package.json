@@ -1,6 +1,6 @@
 {
   "name": "codecontextpro-mes",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "CodeContextPro-MES: AI Cognitive Upgrade with Persistent Memory and Secure Execution Sandbox",
   "main": "dist/index.js",
   "bin": {
