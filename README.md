@@ -5,7 +5,7 @@
 **End AI amnesia forever.** CodeContextPro-MES gives AI coding assistants the persistent memory and execution capabilities they've always needed.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/codecontextpro.svg)](https://www.npmjs.com/package/codecontextpro)
+[![npm version](https://badge.fury.io/js/codecontextpro-mes.svg)](https://www.npmjs.com/package/codecontextpro-mes)
 [![Tests](https://github.com/jahboukie/codecontextpro-mes/actions/workflows/test.yml/badge.svg)](https://github.com/jahboukie/codecontextpro-mes/actions)
 
 ## 🎯 **The Problem: AI Amnesia**
@@ -42,10 +42,10 @@ CodeContextPro-MES provides:
 
 ```bash
 # Install globally
-npm install -g codecontextpro
+npm install -g codecontextpro-mes
 
-# Initialize in your project
-codecontextpro init
+# Check status and license
+codecontextpro status
 
 # Start building context
 codecontextpro remember "Our API uses GraphQL with TypeScript strict mode"
@@ -55,8 +55,8 @@ codecontextpro recall "GraphQL"
 ## 🎮 **Quick Start**
 
 ```bash
-# 1. Initialize memory in your project
-codecontextpro init
+# 1. Check your setup
+codecontextpro status
 
 # 2. Store important context
 codecontextpro remember "We use React with TypeScript and strict ESLint rules"
@@ -64,25 +64,21 @@ codecontextpro remember "We use React with TypeScript and strict ESLint rules"
 # 3. Ask AI assistants to recall context
 codecontextpro recall "coding standards"
 
-# 4. Check your memory status
-codecontextpro status
+# 4. Purchase license for unlimited access
+codecontextpro purchase
 ```
 
 ## 💎 **Pricing**
 
-### 🔥 **Founders Special** - Limited Time
-- **$59/month** (locked forever for early adopters)
-- **Limited to 10,000 licenses**
-- ✅ **UNLIMITED** Memory & Execution
-- ✅ Multi-Project Support  
-- ✅ Cloud Sync
-- ✅ Priority Support
-
-### 🆓 **Free Tier**
-- 20 Memory Operations/month
-- 20 Memory Recalls/month
-- Single project support
-- Local storage only
+### ⚡ **Memory Tier** - Launch Special
+- **$19/month** - Building the Future Together
+- ✅ **5,000 Memory Recalls/month**
+- ✅ **Unlimited Memory Storage**
+- ✅ **Unlimited Projects**
+- ✅ **AES-256 Encryption**
+- ✅ **Persistent Memory**
+- ✅ **Cloud Sync**
+- ✅ **API Platform Support**
 
 [**Get Started →**](https://codecontextpro-mes.web.app)
 
