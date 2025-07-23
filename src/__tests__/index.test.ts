@@ -86,7 +86,7 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
 
     describe('version and exports', () => {
         it('should have correct version', () => {
-            expect(version).toBe('1.0.0');
+            expect(version).toBe('1.2.6');
         });
 
         it('should export CLI class', () => {
