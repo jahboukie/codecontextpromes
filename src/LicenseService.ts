@@ -25,6 +25,8 @@ export interface License {
     features: string[];
     activatedAt: string;
     expiresAt?: string;
+    email?: string;
+    authToken?: string; // Firebase Auth token for API calls
     mock?: boolean;
 }
 
@@ -149,14 +151,27 @@ export class LicenseService {
                 throw new Error('License validation failed - missing license data');
             }
 
+            // Get Firebase Auth token for API calls
+            console.log('🔑 Getting Firebase Auth token...');
+            const authResponse = await this.firebaseService.getAuthToken(trimmedKey);
+            
+            if (!authResponse || !authResponse.customToken) {
+                throw new Error('Failed to get Firebase Auth token');
+            }
+
             // Create license object from Firebase response
             const license: License = {
                 key: trimmedKey,
                 tier: licenseData.tier,
                 active: licenseData.status === 'active',
                 features: licenseData.features || [],
-                activatedAt: licenseData.activatedAt || new Date().toISOString()
+                activatedAt: licenseData.activatedAt || new Date().toISOString(),
+                email: licenseData.email,
+                authToken: authResponse.customToken // Store the auth token
             };
+
+            // Store Firebase config for customer environment (CRITICAL)
+            await this.distributeFirebaseConfig(licenseData.email);
 
             // Store license securely with encryption
             await this.storeLicenseSecurely(license, licenseData.apiKey);
@@ -495,7 +510,9 @@ export class LicenseService {
                 tier: licenseData.tier,
                 active: licenseData.active,
                 features: licenseData.features,
-                activatedAt: licenseData.activatedAt
+                activatedAt: licenseData.activatedAt,
+                email: licenseData.email,
+                authToken: licenseData.authToken
             };
             
         } catch (error) {
@@ -548,10 +565,50 @@ export class LicenseService {
     }
 
     /**
-     * Validate license tier name - NO FREE TIER
+     * Distribute Firebase configuration for customer environment
+     * CRITICAL: Solves the issue where customers don't have Firebase env vars
+     */
+    private async distributeFirebaseConfig(email: string): Promise<void> {
+        try {
+            const fs = require('fs').promises;
+            const path = require('path');
+            
+            // Firebase config for customer environment (from environment variables)
+            const firebaseConfig = {
+                apiKey: process.env.FIREBASE_API_KEY,
+                authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+                messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+                appId: process.env.FIREBASE_APP_ID,
+                databaseURL: process.env.FIREBASE_DATABASE_URL
+            };
+            
+            // Store Firebase config securely in .codecontext/config.json
+            const licenseDir = path.dirname(this.licenseFile);
+            const configFile = path.join(licenseDir, 'firebase-config.json');
+            
+            const configData = {
+                firebase: firebaseConfig,
+                distributedAt: new Date().toISOString(),
+                userEmail: email.substring(0, 3) + '***', // Privacy protection
+                version: '1.0.0'
+            };
+            
+            await fs.writeFile(configFile, JSON.stringify(configData, null, 2));
+            console.log('🔥 Firebase config distributed for customer environment');
+            
+        } catch (error) {
+            console.error('❌ Failed to distribute Firebase config:', error);
+            throw new Error('Failed to distribute Firebase configuration');
+        }
+    }
+
+    /**
+     * Validate license tier name - Only memory tier now
      */
     private isValidTier(tier: string): boolean {
-        const validTiers = ['founders', 'pro', 'developer'];
+        const validTiers = ['memory'];
         return validTiers.includes(tier.toLowerCase());
     }
 }

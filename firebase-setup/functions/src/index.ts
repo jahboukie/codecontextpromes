@@ -371,13 +371,43 @@ export const stripeWebhook = onRequest(
                     .doc(licenseId)
                     .set(licenseData);
 
-                // Update stats for memory tier subscriptions
+                // Create Firebase Auth user (if new) as per Phase 2.1 spec
+                try {
+                    await admin.auth().createUser({
+                        uid: `license-user-${licenseId.replace('license_', '')}`,
+                        email: email,
+                        emailVerified: true,
+                        displayName: `CodeContext Pro User`,
+                        customClaims: {
+                            licenseId: licenseId,
+                            tier: tier,
+                            licenseStatus: 'active'
+                        }
+                    });
+                    console.log('✅ Firebase Auth user created for license:', licenseId);
+                } catch (authError: any) {
+                    if (authError.code === 'auth/email-already-exists') {
+                        console.log('ℹ️ Firebase Auth user already exists for email:', email.substring(0, 3) + '***');
+                        // Update existing user's custom claims
+                        const existingUser = await admin.auth().getUserByEmail(email);
+                        await admin.auth().setCustomUserClaims(existingUser.uid, {
+                            licenseId: licenseId,
+                            tier: tier,
+                            licenseStatus: 'active'
+                        });
+                    } else {
+                        console.error('❌ Failed to create Firebase Auth user:', authError);
+                    }
+                }
+
+                // Update stats - earlyAdoptersSold as per Phase 2.1 spec
                 if (tier === 'memory') {
                     await admin.firestore()
                         .collection('public')
                         .doc('stats')
                         .set({
-                            memorySubscriptions: admin.firestore.FieldValue.increment(1),
+                            earlyAdoptersSold: admin.firestore.FieldValue.increment(1),
+                            memoryTierUsers: admin.firestore.FieldValue.increment(1),
                             totalRevenue: admin.firestore.FieldValue.increment(19),
                             lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
@@ -711,6 +741,245 @@ export const reportUsage = onCall(async (data, context) => {
         );
     }
 });
+
+/**
+ * Validate Usage Function (v2) - Phase 2.2 Implementation
+ * CRITICAL: Enforces usage limits with JWT verification
+ */
+export const validateUsage = onCall(
+    async (data, context) => {
+        try {
+            // Verify Firebase ID Token (Authentication required)
+            if (!context.auth || !context.auth.token) {
+                console.log('❌ validateUsage: No auth token provided');
+                throw new HttpsError(
+                    'unauthenticated',
+                    'Authentication required'
+                );
+            }
+
+            if (!data || typeof data !== 'object') {
+                throw new HttpsError(
+                    'invalid-argument',
+                    'Invalid request data'
+                );
+            }
+
+            validateNoSecrets(data);
+
+            const { licenseKey, operation, email } = (data as unknown) as {
+                licenseKey: string;
+                operation: string;
+                email: string;
+            };
+
+            // Validate required fields
+            if (!licenseKey || typeof licenseKey !== 'string') {
+                throw new HttpsError(
+                    'invalid-argument',
+                    'License key is required'
+                );
+            }
+
+            if (!operation || typeof operation !== 'string') {
+                throw new HttpsError(
+                    'invalid-argument',
+                    'Operation is required'
+                );
+            }
+
+            if (!email || typeof email !== 'string') {
+                throw new HttpsError(
+                    'invalid-argument',
+                    'Email is required'
+                );
+            }
+
+            // CRITICAL: Ensure authenticated user matches email in request
+            const authEmail = context.auth.token.email;
+            if (authEmail !== email) {
+                console.log('❌ validateUsage: Email mismatch', {
+                    authEmail: authEmail?.substring(0, 3) + '***',
+                    requestEmail: email.substring(0, 3) + '***'
+                });
+                throw new HttpsError(
+                    'permission-denied',
+                    'Email does not match authenticated user'
+                );
+            }
+
+            // Validate operation type
+            const validOperations = ['recall', 'remember', 'scan', 'export', 'execute'];
+            if (!validOperations.includes(operation)) {
+                throw new HttpsError(
+                    'invalid-argument',
+                    `Invalid operation. Must be one of: ${validOperations.join(', ')}`
+                );
+            }
+
+            // Get license document
+            const licenseDoc = await admin.firestore()
+                .collection('licenses')
+                .doc(licenseKey)
+                .get();
+
+            if (!licenseDoc.exists) {
+                console.log('❌ validateUsage: License not found:', licenseKey.substring(0, 12) + '***');
+                throw new HttpsError(
+                    'not-found',
+                    'License not found'
+                );
+            }
+
+            const licenseData = licenseDoc.data();
+            if (!licenseData) {
+                throw new HttpsError(
+                    'internal',
+                    'License data corrupted'
+                );
+            }
+
+            // Check license active status
+            if (licenseData.status !== 'active') {
+                console.log('❌ validateUsage: License inactive:', licenseKey.substring(0, 12) + '***');
+                throw new HttpsError(
+                    'failed-precondition',
+                    `License is ${licenseData.status}`
+                );
+            }
+
+            // Verify license owner matches authenticated user
+            if (licenseData.email !== email) {
+                console.log('❌ validateUsage: License owner mismatch', {
+                    licenseEmail: licenseData.email.substring(0, 3) + '***',
+                    requestEmail: email.substring(0, 3) + '***'
+                });
+                throw new HttpsError(
+                    'permission-denied',
+                    'License does not belong to authenticated user'
+                );
+            }
+
+            // Get current month key for usage tracking
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            // Initialize usage tracking if not exists
+            if (!licenseData.usage) {
+                await admin.firestore()
+                    .collection('licenses')
+                    .doc(licenseKey)
+                    .update({
+                        usage: {
+                            [monthKey]: {
+                                recall: 0,
+                                remember: 0,
+                                scan: 0,
+                                export: 0,
+                                execute: 0,
+                                resetAt: admin.firestore.FieldValue.serverTimestamp()
+                            }
+                        }
+                    });
+            }
+
+            // Get current usage for this month
+            const currentUsage = licenseData.usage?.[monthKey] || {
+                recall: 0,
+                remember: 0,
+                scan: 0,
+                export: 0,
+                execute: 0
+            };
+
+            // Define operation limits based on tier
+            let operationLimits: Record<string, number>;
+            if (licenseData.tier === 'memory') {
+                // Memory tier: 5,000 recalls/month, unlimited others
+                operationLimits = {
+                    recall: 5000,
+                    remember: 999999,
+                    scan: 999999,
+                    export: 999999,
+                    execute: 999999 // Will be limited when execution is implemented
+                };
+            } else {
+                // Free tier: 20/20/20 limits
+                operationLimits = {
+                    recall: 20,
+                    remember: 20,
+                    scan: 20,
+                    export: 20,
+                    execute: 20
+                };
+            }
+
+            // Check if operation would exceed limit
+            const currentCount = currentUsage[operation] || 0;
+            const limit = operationLimits[operation];
+
+            if (currentCount >= limit) {
+                console.log('❌ validateUsage: Limit exceeded', {
+                    licenseId: licenseKey.substring(0, 12) + '***',
+                    operation,
+                    currentCount,
+                    limit,
+                    tier: licenseData.tier
+                });
+                throw new HttpsError(
+                    'resource-exhausted',
+                    `Monthly ${operation} limit of ${limit} exceeded. Current usage: ${currentCount}/${limit}`
+                );
+            }
+
+            // CRITICAL: Atomically increment usage before returning success
+            const usageUpdatePath = `usage.${monthKey}.${operation}`;
+            await admin.firestore()
+                .collection('licenses')
+                .doc(licenseKey)
+                .update({
+                    [usageUpdatePath]: admin.firestore.FieldValue.increment(1),
+                    [`usage.${monthKey}.lastUsedAt`]: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+            const newCount = currentCount + 1;
+
+            console.log('✅ validateUsage: Operation authorized', {
+                licenseId: licenseKey.substring(0, 12) + '***',
+                email: email.substring(0, 3) + '***',
+                operation,
+                newCount,
+                limit,
+                tier: licenseData.tier,
+                monthKey
+            });
+
+            return {
+                success: true,
+                operation,
+                usage: {
+                    current: newCount,
+                    limit: limit,
+                    remaining: limit - newCount
+                },
+                tier: licenseData.tier,
+                monthKey
+            };
+
+        } catch (error) {
+            console.error('❌ Error in validateUsage:', error);
+            
+            if (error instanceof HttpsError) {
+                throw error;
+            }
+            
+            throw new HttpsError(
+                'internal',
+                'Usage validation failed'
+            );
+        }
+    }
+);
 
 /**
  * Get License by Session Function (v2)

@@ -60,6 +60,12 @@ describe('CodeContextPro-MES Phase 1 Sprint 1.1', () => {
             configured: true
         });
         mockFirebaseService.testConnection = jest.fn().mockResolvedValue(true);
+        mockFirebaseService.getAuthToken = jest.fn().mockResolvedValue({
+            customToken: 'mock_custom_token',
+            uid: 'mock_uid',
+            tier: 'memory',
+            features: ['memory_recalls_5000', 'unlimited_projects']
+        });
     });
 
     afterAll(() => {

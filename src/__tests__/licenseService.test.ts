@@ -58,6 +58,12 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
             configured: true
         });
         mockFirebaseService.testConnection = jest.fn().mockResolvedValue(true);
+        mockFirebaseService.getAuthToken = jest.fn().mockResolvedValue({
+            customToken: 'mock_custom_token',
+            uid: 'mock_uid',
+            tier: 'memory',
+            features: ['memory_recalls_5000', 'unlimited_projects']
+        });
 
         // Create .codecontext directory for tests if it doesn't exist
         if (!fs.existsSync(testCodecontextDir)) {
@@ -170,8 +176,9 @@ describe('LicenseService Phase 1 Sprint 1.2', () => {
         it('should activate valid license keys', async () => {
             const validKey = `license_${Date.now()}_abcdef123`;
             
-            // Mock the storeLicenseSecurely method to avoid crypto issues in tests
+            // Mock the storeLicenseSecurely and distributeFirebaseConfig methods to avoid crypto/filesystem issues in tests
             jest.spyOn(service as any, 'storeLicenseSecurely').mockResolvedValue(undefined);
+            jest.spyOn(service as any, 'distributeFirebaseConfig').mockResolvedValue(undefined);
             
             // The mock in beforeEach should return a successful validation
             const result = await service.activateLicense(validKey);

@@ -8,6 +8,7 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 
 export interface UsageMetadata {
     [key: string]: any;
@@ -26,6 +27,7 @@ export class FirebaseService {
     private apiEndpoint: string;
     private app: any;
     private functions: any;
+    private auth: any;
 
     constructor() {
         this.projectId = process.env.FIREBASE_PROJECT_ID || 'codecontext-mes';
@@ -39,19 +41,65 @@ export class FirebaseService {
     }
 
     /**
+     * Load Firebase configuration from distributed config file (customer environment)
+     * CRITICAL: Enables customers to use CLI without dev environment variables
+     */
+    private loadDistributedConfig(): any | null {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Look for config in .codecontext directory
+            const configPath = path.join(process.cwd(), '.codecontext', 'firebase-config.json');
+            
+            if (fs.existsSync(configPath)) {
+                const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+                console.log('🔥 Using distributed Firebase config (customer environment)');
+                return configData.firebase;
+            }
+            
+            // Also check parent directories (in case CLI is run from subdirectory)
+            let currentDir = process.cwd();
+            const root = path.parse(currentDir).root;
+            
+            while (currentDir !== root) {
+                const parentConfigPath = path.join(currentDir, '.codecontext', 'firebase-config.json');
+                if (fs.existsSync(parentConfigPath)) {
+                    const configData = JSON.parse(fs.readFileSync(parentConfigPath, 'utf8'));
+                    console.log('🔥 Using distributed Firebase config from parent directory');
+                    return configData.firebase;
+                }
+                currentDir = path.dirname(currentDir);
+            }
+            
+            return null;
+            
+        } catch (error) {
+            console.warn('⚠️ Could not load distributed Firebase config:', error);
+            return null;
+        }
+    }
+
+    /**
      * Initialize Firebase App and Functions
+     * CRITICAL: Now supports customer environments with distributed config
      */
     private initializeFirebase(): void {
         try {
-            // Firebase configuration - NO HARDCODED SECRETS
-            const firebaseConfig = {
-                apiKey: process.env.FIREBASE_API_KEY,
-                authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-                projectId: this.projectId,
-                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-                messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-                appId: process.env.FIREBASE_APP_ID
-            };
+            // Try to load Firebase config from distributed file first (customer environment)
+            let firebaseConfig = this.loadDistributedConfig();
+            
+            // Fall back to environment variables (development environment)
+            if (!firebaseConfig) {
+                firebaseConfig = {
+                    apiKey: process.env.FIREBASE_API_KEY,
+                    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+                    projectId: this.projectId,
+                    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+                    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+                    appId: process.env.FIREBASE_APP_ID
+                };
+            }
 
             // Validate required configuration
             const requiredFields = ['apiKey', 'authDomain', 'storageBucket', 'messagingSenderId', 'appId'] as const;
@@ -68,8 +116,9 @@ export class FirebaseService {
                 this.app = getApps()[0];
             }
 
-            // Initialize Functions
+            // Initialize Functions and Auth
             this.functions = getFunctions(this.app);
+            this.auth = getAuth(this.app);
 
             // Connect to emulator if in development
             if (process.env.NODE_ENV === 'development' && process.env.FIREBASE_EMULATOR === 'true') {
@@ -197,9 +246,19 @@ export class FirebaseService {
     }
 
     /**
-     * Validate Firebase configuration
+     * Validate Firebase configuration - Updated for customer environment support
+     * CRITICAL: Now accepts either distributed config OR environment variables
      */
     private validateConfig(): void {
+        // Check if we have distributed config file (customer environment)
+        const distributedConfig = this.loadDistributedConfig();
+        
+        if (distributedConfig) {
+            console.log('✅ Firebase configuration validated (distributed config)');
+            return;
+        }
+        
+        // Fall back to environment variable validation (development environment)
         const requiredVars = [
             'FIREBASE_PROJECT_ID',
             'FIREBASE_API_KEY',
@@ -211,11 +270,12 @@ export class FirebaseService {
         const missing = requiredVars.filter(varName => !process.env[varName]);
 
         if (missing.length > 0) {
-            console.error(`❌ Missing required Firebase environment variables: ${missing.join(', ')}`);
-            console.error('   Application cannot function without proper Firebase configuration');
-            throw new Error(`Missing Firebase configuration: ${missing.join(', ')}`);
+            console.warn(`⚠️ Missing Firebase environment variables: ${missing.join(', ')}`);
+            console.warn('   Customer environment should activate license first to get config');
+            console.warn('   Run: codecontextpro activate <LICENSE_KEY>');
+            // Don't throw error - allow graceful degradation for customers
         } else {
-            console.log('✅ Firebase configuration validated');
+            console.log('✅ Firebase configuration validated (environment variables)');
         }
     }
 
@@ -261,6 +321,124 @@ export class FirebaseService {
             if (error && typeof error === 'object' && 'code' in error) {
                 const firebaseError = error as any;
                 throw new Error(`License validation failed: ${firebaseError.message || firebaseError.code}`);
+            }
+            
+            throw error;
+        }
+    }
+
+    /**
+     * Validate Usage with Firebase Functions - Phase 2.2 Implementation
+     * CRITICAL: Enforces usage limits with authentication
+     */
+    async validateUsage(licenseKey: string, operation: string, email: string, authToken: string): Promise<any> {
+        try {
+            // Input validation
+            if (!licenseKey || typeof licenseKey !== 'string') {
+                throw new Error('License key is required and must be a string');
+            }
+
+            if (!operation || typeof operation !== 'string') {
+                throw new Error('Operation is required and must be a string');
+            }
+
+            if (!email || typeof email !== 'string') {
+                throw new Error('Email is required and must be a string');
+            }
+
+            if (!authToken || typeof authToken !== 'string') {
+                throw new Error('Auth token is required and must be a string');
+            }
+
+            // Validate operation type
+            const validOperations = ['recall', 'remember', 'scan', 'export', 'execute'];
+            if (!validOperations.includes(operation)) {
+                throw new Error(`Invalid operation. Must be one of: ${validOperations.join(', ')}`);
+            }
+
+            console.log(`🛡️ Validating usage for operation: ${operation}`);
+
+            // Authenticate with Firebase using custom token
+            await signInWithCustomToken(this.auth, authToken);
+            console.log('🔑 Firebase authentication successful');
+
+            // Call Firebase Functions with authenticated context
+            const validateUsageFunction = httpsCallable(this.functions, 'validateUsage');
+            
+            const result = await validateUsageFunction({
+                licenseKey,
+                operation,
+                email
+            });
+
+            if (!result.data) {
+                throw new Error('Invalid response from usage validation');
+            }
+
+            console.log('✅ Usage validation successful', {
+                operation,
+                remaining: (result.data as any)?.usage?.remaining || 'unknown',
+                tier: (result.data as any)?.tier || 'unknown'
+            });
+
+            return result.data;
+
+        } catch (error) {
+            console.error('❌ Usage validation failed:', error);
+            
+            // Handle Firebase Functions errors
+            if (error && typeof error === 'object' && 'code' in error) {
+                const firebaseError = error as any;
+                
+                // Provide user-friendly error messages for common cases
+                if (firebaseError.code === 'functions/resource-exhausted') {
+                    throw new Error(`Usage limit exceeded: ${firebaseError.message}`);
+                } else if (firebaseError.code === 'functions/unauthenticated') {
+                    throw new Error('Authentication failed. Please activate your license again.');
+                } else if (firebaseError.code === 'functions/permission-denied') {
+                    throw new Error('Permission denied. License may not belong to this user.');
+                } else if (firebaseError.code === 'auth/invalid-custom-token') {
+                    throw new Error('Invalid authentication token. Please re-activate your license.');
+                } else {
+                    throw new Error(`Usage validation failed: ${firebaseError.message || firebaseError.code}`);
+                }
+            }
+            
+            throw error;
+        }
+    }
+
+    /**
+     * Get Firebase Auth Token - Phase 2.2 Implementation
+     * Gets a custom Firebase Auth token for authenticated API calls
+     */
+    async getAuthToken(licenseKey: string): Promise<any> {
+        try {
+            // Input validation
+            if (!licenseKey || typeof licenseKey !== 'string') {
+                throw new Error('License key is required and must be a string');
+            }
+
+            console.log(`🔑 Calling Firebase getAuthToken function...`);
+
+            // Call Firebase Functions using the SDK
+            const getAuthTokenFunction = httpsCallable(this.functions, 'getAuthToken');
+            const result = await getAuthTokenFunction({ licenseKey });
+
+            if (!result.data) {
+                throw new Error('Invalid response from auth token generation');
+            }
+
+            console.log('✅ Auth token generated successfully');
+            return result.data;
+
+        } catch (error) {
+            console.error('❌ Auth token generation failed:', error);
+            
+            // Handle Firebase Functions errors
+            if (error && typeof error === 'object' && 'code' in error) {
+                const firebaseError = error as any;
+                throw new Error(`Auth token generation failed: ${firebaseError.message || firebaseError.code}`);
             }
             
             throw error;

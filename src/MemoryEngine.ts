@@ -247,4 +247,13 @@ export class MemoryEngine {
             initialized: this.initialized
         };
     }
+
+    /**
+     * Initialize project and return project information
+     * Used by codecontextpro init command
+     */
+    async initProject(): Promise<{ path: string; dbPath: string; initialized: boolean }> {
+        await this.initialize();
+        return this.getProjectInfo();
+    }
 }
