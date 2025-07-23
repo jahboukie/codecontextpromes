@@ -1069,16 +1069,16 @@ export const getFirebaseConfig = onRequest(
                 return;
             }
 
-            // Firebase client configuration (public information)
-            // This is the same config that would be in any web app's source code
+            // Firebase client configuration (using environment variables for security)
+            // SECURITY FIX: Never hardcode API keys in source code
             const firebaseConfig = {
-                apiKey: "AIzaSyBYurWJAXQ8dEgyi4V8NCVUd9TT1-vl0yw",
-                authDomain: "codecontextpro-mes.firebaseapp.com",
-                projectId: "codecontextpro-mes",
-                storageBucket: "codecontextpro-mes.firebasestorage.app",
-                messagingSenderId: "168225201154",
-                appId: "1:168225201154:web:e035d44d4a093ddcf7db1b",
-                databaseURL: "https://codecontextpro-mes-default-rtdb.firebaseio.com"
+                apiKey: process.env.FIREBASE_API_KEY,
+                authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+                messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+                appId: process.env.FIREBASE_APP_ID,
+                databaseURL: process.env.FIREBASE_DATABASE_URL
             };
 
             console.log('✅ Firebase config served to customer CLI');
