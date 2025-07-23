@@ -42,7 +42,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLicenseBySession = exports.reportUsage = exports.getAuthToken = exports.validateLicense = exports.stripeWebhook = exports.createCheckout = exports.getPricingHttp = void 0;
+exports.getFirebaseConfig = exports.getLicenseBySession = exports.validateUsage = exports.reportUsage = exports.getAuthToken = exports.validateLicense = exports.stripeWebhook = exports.createCheckout = exports.getPricingHttp = void 0;
 const admin = __importStar(require("firebase-admin"));
 const stripe_1 = __importDefault(require("stripe"));
 const cors = __importStar(require("cors"));
@@ -63,6 +63,7 @@ const STRIPE_SECRET_KEY = (0, params_1.defineSecret)('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = (0, params_1.defineSecret)('STRIPE_WEBHOOK_SECRET');
 const MEMORY_PRICE_ID = (0, params_1.defineSecret)('MEMORY_PRICE_ID');
 const ENCRYPTION_MASTER_KEY = (0, params_1.defineSecret)('ENCRYPTION_MASTER_KEY');
+const FIREBASE_WEB_API_KEY = (0, params_1.defineSecret)('FIREBASE_WEB_API_KEY');
 // Note: Stripe instances are created within functions to access secrets properly
 /**
  * CORS Handler with Security Restrictions
@@ -154,7 +155,7 @@ exports.getPricingHttp = (0, https_1.onRequest)({ secrets: [MEMORY_PRICE_ID] }, 
                         period: 'month',
                         description: 'Building the Future Together - Support our API platform development',
                         limits: {
-                            memory: 5000,
+                            memory: 'unlimited',
                             projects: 'unlimited',
                             executions: 'coming-soon'
                         },
@@ -329,7 +330,7 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 activatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 features: tier === 'memory' ? [
-                    'memory_recalls_5000',
+                    'unlimited_memory_recalls',
                     'unlimited_projects',
                     'persistent_memory',
                     'cloud_sync',
@@ -344,13 +345,45 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [STRIPE_WEBHOOK_SECRET
                 .collection('licenses')
                 .doc(licenseId)
                 .set(licenseData);
-            // Update stats for memory tier subscriptions
+            // Create Firebase Auth user (if new) as per Phase 2.1 spec
+            try {
+                const userRecord = await admin.auth().createUser({
+                    uid: `license-user-${licenseId.replace('license_', '')}`,
+                    email: email,
+                    emailVerified: true,
+                    displayName: `CodeContext Pro User`
+                });
+                // Set custom claims separately
+                await admin.auth().setCustomUserClaims(userRecord.uid, {
+                    licenseId: licenseId,
+                    tier: tier,
+                    licenseStatus: 'active'
+                });
+                console.log('✅ Firebase Auth user created for license:', licenseId);
+            }
+            catch (authError) {
+                if (authError.code === 'auth/email-already-exists') {
+                    console.log('ℹ️ Firebase Auth user already exists for email:', email.substring(0, 3) + '***');
+                    // Update existing user's custom claims
+                    const existingUser = await admin.auth().getUserByEmail(email);
+                    await admin.auth().setCustomUserClaims(existingUser.uid, {
+                        licenseId: licenseId,
+                        tier: tier,
+                        licenseStatus: 'active'
+                    });
+                }
+                else {
+                    console.error('❌ Failed to create Firebase Auth user:', authError);
+                }
+            }
+            // Update stats - earlyAdoptersSold as per Phase 2.1 spec
             if (tier === 'memory') {
                 await admin.firestore()
                     .collection('public')
                     .doc('stats')
                     .set({
-                    memorySubscriptions: admin.firestore.FieldValue.increment(1),
+                    earlyAdoptersSold: admin.firestore.FieldValue.increment(1),
+                    memoryTierUsers: admin.firestore.FieldValue.increment(1),
                     totalRevenue: admin.firestore.FieldValue.increment(19),
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
@@ -482,7 +515,7 @@ exports.getAuthToken = (0, https_1.onCall)(async (data, context) => {
             licenseStatus: licenseData.status
         };
         if (licenseData.tier === 'memory') {
-            customClaims.memoryLimit = 5000;
+            customClaims.memoryLimit = 'unlimited';
             customClaims.unlimitedProjects = true;
             customClaims.cloudSync = true;
             customClaims.apiPlatformSupport = true;
@@ -565,6 +598,176 @@ exports.reportUsage = (0, https_1.onCall)(async (data, context) => {
     }
 });
 /**
+ * Validate Usage Function (v2) - Phase 2.2 Implementation
+ * CRITICAL: Enforces usage limits with JWT verification
+ */
+exports.validateUsage = (0, https_1.onCall)(async (request) => {
+    var _a;
+    try {
+        // Verify Firebase ID Token (Authentication required)
+        if (!request.auth || !request.auth.token) {
+            console.log('❌ validateUsage: No auth token provided');
+            throw new https_1.HttpsError('unauthenticated', 'Authentication required');
+        }
+        if (!request.data || typeof request.data !== 'object') {
+            throw new https_1.HttpsError('invalid-argument', 'Invalid request data');
+        }
+        validateNoSecrets(request.data);
+        const { licenseKey, operation, email } = request.data;
+        // Validate required fields
+        if (!licenseKey || typeof licenseKey !== 'string') {
+            throw new https_1.HttpsError('invalid-argument', 'License key is required');
+        }
+        if (!operation || typeof operation !== 'string') {
+            throw new https_1.HttpsError('invalid-argument', 'Operation is required');
+        }
+        if (!email || typeof email !== 'string') {
+            throw new https_1.HttpsError('invalid-argument', 'Email is required');
+        }
+        // CRITICAL: Ensure authenticated user matches email in request
+        const authEmail = request.auth.token.email;
+        if (authEmail !== email) {
+            console.log('❌ validateUsage: Email mismatch', {
+                authEmail: (authEmail === null || authEmail === void 0 ? void 0 : authEmail.substring(0, 3)) + '***',
+                requestEmail: email.substring(0, 3) + '***'
+            });
+            throw new https_1.HttpsError('permission-denied', 'Email does not match authenticated user');
+        }
+        // Validate operation type
+        const validOperations = ['recall', 'remember', 'scan', 'export', 'execute'];
+        if (!validOperations.includes(operation)) {
+            throw new https_1.HttpsError('invalid-argument', `Invalid operation. Must be one of: ${validOperations.join(', ')}`);
+        }
+        // Get license document
+        const licenseDoc = await admin.firestore()
+            .collection('licenses')
+            .doc(licenseKey)
+            .get();
+        if (!licenseDoc.exists) {
+            console.log('❌ validateUsage: License not found:', licenseKey.substring(0, 12) + '***');
+            throw new https_1.HttpsError('not-found', 'License not found');
+        }
+        const licenseData = licenseDoc.data();
+        if (!licenseData) {
+            throw new https_1.HttpsError('internal', 'License data corrupted');
+        }
+        // Check license active status
+        if (licenseData.status !== 'active') {
+            console.log('❌ validateUsage: License inactive:', licenseKey.substring(0, 12) + '***');
+            throw new https_1.HttpsError('failed-precondition', `License is ${licenseData.status}`);
+        }
+        // Verify license owner matches authenticated user
+        if (licenseData.email !== email) {
+            console.log('❌ validateUsage: License owner mismatch', {
+                licenseEmail: licenseData.email.substring(0, 3) + '***',
+                requestEmail: email.substring(0, 3) + '***'
+            });
+            throw new https_1.HttpsError('permission-denied', 'License does not belong to authenticated user');
+        }
+        // Get current month key for usage tracking
+        const now = new Date();
+        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        // Initialize usage tracking if not exists
+        if (!licenseData.usage) {
+            await admin.firestore()
+                .collection('licenses')
+                .doc(licenseKey)
+                .update({
+                usage: {
+                    [monthKey]: {
+                        recall: 0,
+                        remember: 0,
+                        scan: 0,
+                        export: 0,
+                        execute: 0,
+                        resetAt: admin.firestore.FieldValue.serverTimestamp()
+                    }
+                }
+            });
+        }
+        // Get current usage for this month
+        const currentUsage = ((_a = licenseData.usage) === null || _a === void 0 ? void 0 : _a[monthKey]) || {
+            recall: 0,
+            remember: 0,
+            scan: 0,
+            export: 0,
+            execute: 0
+        };
+        // Define operation limits based on tier
+        let operationLimits;
+        if (licenseData.tier === 'memory') {
+            // Memory tier: UNLIMITED for all operations - more attractive offer!
+            operationLimits = {
+                recall: 999999999, // Effectively unlimited
+                remember: 999999999,
+                scan: 999999999,
+                export: 999999999,
+                execute: 999999999 // Unlimited execution when implemented
+            };
+        }
+        else {
+            // Free tier: 20/20/20 limits
+            operationLimits = {
+                recall: 20,
+                remember: 20,
+                scan: 20,
+                export: 20,
+                execute: 20
+            };
+        }
+        // Check if operation would exceed limit
+        const currentCount = currentUsage[operation] || 0;
+        const limit = operationLimits[operation];
+        if (currentCount >= limit) {
+            console.log('❌ validateUsage: Limit exceeded', {
+                licenseId: licenseKey.substring(0, 12) + '***',
+                operation,
+                currentCount,
+                limit,
+                tier: licenseData.tier
+            });
+            throw new https_1.HttpsError('resource-exhausted', `Monthly ${operation} limit of ${limit} exceeded. Current usage: ${currentCount}/${limit}`);
+        }
+        // CRITICAL: Atomically increment usage before returning success
+        const usageUpdatePath = `usage.${monthKey}.${operation}`;
+        await admin.firestore()
+            .collection('licenses')
+            .doc(licenseKey)
+            .update({
+            [usageUpdatePath]: admin.firestore.FieldValue.increment(1),
+            [`usage.${monthKey}.lastUsedAt`]: admin.firestore.FieldValue.serverTimestamp()
+        });
+        const newCount = currentCount + 1;
+        console.log('✅ validateUsage: Operation authorized', {
+            licenseId: licenseKey.substring(0, 12) + '***',
+            email: email.substring(0, 3) + '***',
+            operation,
+            newCount,
+            limit,
+            tier: licenseData.tier,
+            monthKey
+        });
+        return {
+            success: true,
+            operation,
+            usage: {
+                current: newCount,
+                limit: licenseData.tier === 'memory' ? 'unlimited' : limit,
+                remaining: licenseData.tier === 'memory' ? 'unlimited' : (limit - newCount)
+            },
+            tier: licenseData.tier,
+            monthKey
+        };
+    }
+    catch (error) {
+        console.error('❌ Error in validateUsage:', error);
+        if (error instanceof https_1.HttpsError) {
+            throw error;
+        }
+        throw new https_1.HttpsError('internal', 'Usage validation failed');
+    }
+});
+/**
  * Get License by Session Function (v2)
  * Retrieves license key for success page display
  */
@@ -604,6 +807,70 @@ exports.getLicenseBySession = (0, https_1.onRequest)({ secrets: [] }, async (req
     catch (error) {
         console.error('❌ Error in getLicenseBySession:', error);
         res.status(500).json({ error: 'Failed to retrieve license' });
+    }
+});
+/**
+ * Get Firebase Configuration for Customer CLI Distribution
+ * CRITICAL: Solves the Firebase config distribution issue for customer environments
+ *
+ * This is a PUBLIC endpoint that serves Firebase client configuration.
+ * Firebase client config is meant to be public (it's in every web app's source).
+ * The API key restrictions in Google Cloud Console provide the actual security.
+ */
+exports.getFirebaseConfig = (0, https_1.onRequest)({
+    cors: true, // Allow all origins for this public config endpoint
+    memory: '128MiB',
+    timeoutSeconds: 30,
+    invoker: 'public', // CRITICAL: Allow public access without authentication
+    secrets: [FIREBASE_WEB_API_KEY], // SECURITY: Load API key from Secret Manager
+}, async (req, res) => {
+    try {
+        console.log('🔧 Firebase config requested by customer CLI');
+        // Add security headers
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.set('Access-Control-Allow-Headers', 'Content-Type');
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        // Handle preflight OPTIONS request
+        if (req.method === 'OPTIONS') {
+            res.status(204).send('');
+            return;
+        }
+        // Only allow GET requests
+        if (req.method !== 'GET') {
+            res.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        // Firebase client configuration (using Secret Manager for API key)
+        // SECURITY: API key from Secret Manager, other config from environment/defaults
+        const firebaseConfig = {
+            apiKey: FIREBASE_WEB_API_KEY.value(), // SECURE: Read from Secret Manager
+            authDomain: process.env.FIREBASE_AUTH_DOMAIN || "codecontextpro-mes.firebaseapp.com",
+            projectId: process.env.FIREBASE_PROJECT_ID || "codecontextpro-mes",
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "codecontextpro-mes.firebasestorage.app",
+            messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "168225201154",
+            appId: process.env.FIREBASE_APP_ID || "1:168225201154:web:e035d44d4a093ddcf7db1b",
+            databaseURL: process.env.FIREBASE_DATABASE_URL || "https://codecontextpro-mes-default-rtdb.firebaseio.com"
+        };
+        // Validate that we have the required configuration
+        if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+            console.error('❌ Firebase configuration incomplete - missing API key or project ID');
+            res.status(500).json({
+                error: 'Firebase configuration not properly set up on server',
+                message: 'Please contact support - server configuration issue'
+            });
+            return;
+        }
+        console.log('✅ Firebase config served to customer CLI');
+        // Return the configuration
+        res.status(200).json(Object.assign(Object.assign({}, firebaseConfig), { version: "1.0.0", distributedAt: new Date().toISOString(), note: "This configuration enables your CLI to connect to CodeContextPro-MES services" }));
+    }
+    catch (error) {
+        console.error('❌ Error serving Firebase config:', error);
+        res.status(500).json({
+            error: 'Failed to retrieve Firebase configuration',
+            message: 'Please try again or contact support'
+        });
     }
 });
 //# sourceMappingURL=index.js.map

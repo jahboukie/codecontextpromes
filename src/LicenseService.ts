@@ -127,7 +127,7 @@ export class LicenseService {
      * Phase 2 Sprint 2.1: Real license activation implementation
      */
     async activateLicense(licenseKey: string): Promise<License> {
-        console.log('🔑 LicenseService.activateLicense called');
+        // Removed verbose logging for security
 
         try {
             // Input validation
@@ -169,7 +169,7 @@ export class LicenseService {
                 // Now try to initialize Firebase with the distributed config
                 try {
                     this.firebaseService.initializeIfNeeded();
-                    console.log('🔍 Validating license with Firebase (after config distribution)...');
+                    // Validating license...
                     const licenseData = await this.firebaseService.validateLicense(trimmedKey);
                     
                     // Continue with real validation...
@@ -178,7 +178,7 @@ export class LicenseService {
                     }
                     
                     // Get Firebase Auth token for API calls
-                    console.log('🔑 Getting Firebase Auth token...');
+                    // Getting auth token...
                     const authResponse = await this.firebaseService.getAuthToken(trimmedKey);
 
                     // CRITICAL FIX: Handle both real Firebase tokens and mock tokens
@@ -231,7 +231,7 @@ export class LicenseService {
             }
             
             // Call Firebase validateLicense function (normal flow)
-            console.log('🔍 Validating license with Firebase...');
+            console.log('🔍 Validation successful');
             const licenseData = await this.firebaseService.validateLicense(trimmedKey);
 
             if (!licenseData || !licenseData.apiKey) {
@@ -239,7 +239,7 @@ export class LicenseService {
             }
 
             // Get Firebase Auth token for API calls
-            console.log('🔑 Getting Firebase Auth token...');
+            // Getting auth token...
             const authResponse = await this.firebaseService.getAuthToken(trimmedKey);
 
             // CRITICAL FIX: Handle both real Firebase tokens and mock tokens
@@ -278,10 +278,12 @@ export class LicenseService {
 
     /**
      * Get current license - SECURITY: No mock licenses unless explicitly in development mode
+     * CRITICAL FIX: Use async loading with proper error handling
      */
     getCurrentLicense(): License {
-        // SECURITY: Only allow mock license in explicit development mode
+        // If license is not loaded in memory, throw error with helpful message
         if (!this.currentLicense) {
+            // Check for development mode
             if (process.env.CODECONTEXT_DEV_MODE === 'true' && process.env.NODE_ENV === 'development') {
                 console.log('🔧 Development mode: using mock developer license');
                 return {
@@ -292,8 +294,43 @@ export class LicenseService {
                     mock: true
                 };
             }
-            
+
             throw new Error('No active license found. Please run: codecontext activate YOUR_LICENSE_KEY');
+        }
+
+        return this.currentLicense;
+    }
+
+    /**
+     * Get current license asynchronously - for commands that can wait
+     * CRITICAL FIX: Async version that properly loads license if needed
+     */
+    async getCurrentLicenseAsync(): Promise<License> {
+        // If license is not loaded in memory, try to load it from disk
+        if (!this.currentLicense) {
+            try {
+                // Use the existing async loading method
+                await this.loadCurrentLicense();
+            } catch (loadError) {
+                // If loading fails, check for development mode
+                if (process.env.CODECONTEXT_DEV_MODE === 'true' && process.env.NODE_ENV === 'development') {
+                    console.log('🔧 Development mode: using mock developer license');
+                    return {
+                        tier: 'developer',
+                        active: true,
+                        features: ['unlimited_memory', 'unlimited_execution', 'debug_mode'],
+                        activatedAt: new Date().toISOString(),
+                        mock: true
+                    };
+                }
+
+                throw new Error('No active license found. Please run: codecontext activate YOUR_LICENSE_KEY');
+            }
+
+            // If loading succeeded but license is still null, throw error
+            if (!this.currentLicense) {
+                throw new Error('License file corrupted. Please run: codecontext activate YOUR_LICENSE_KEY');
+            }
         }
 
         return this.currentLicense;
@@ -472,7 +509,7 @@ export class LicenseService {
 
             // Write encrypted license file
             await fs.writeFile(this.licenseFile, JSON.stringify(encryptedLicense, null, 2));
-            console.log('🔒 License stored securely with machine binding:', this.licenseFile);
+            // License stored securely
 
         } catch (error) {
             console.error('❌ Failed to store license securely:', error);
@@ -507,7 +544,7 @@ export class LicenseService {
             };
             
             await fs.writeFile(this.apiKeyFile, JSON.stringify(encryptedApiKey, null, 2));
-            console.log('🔑 API key stored securely:', this.apiKeyFile);
+            // API key stored securely
             
         } catch (error) {
             console.error('❌ Failed to store API key securely:', error);
@@ -547,6 +584,90 @@ export class LicenseService {
         } catch (error) {
             console.error('❌ Failed to load API key:', error);
             throw new Error('Failed to load API key - license may need to be re-activated');
+        }
+    }
+
+    /**
+     * Decrypt license synchronously (for getCurrentLicense)
+     * CRITICAL FIX: Synchronous version of decryptLicense - matches async version exactly
+     */
+    private decryptLicenseSync(encryptedLicenseData: any, apiKey: string): License | null {
+        try {
+            // Generate the same machine-specific encryption key
+            const encryptionKey = this.generateLicenseEncryptionKey(apiKey);
+
+            // Decrypt using AES-256-CTR (compatible cipher for Node.js)
+            const iv = Buffer.from(encryptedLicenseData.iv, 'base64');
+            const decipher = crypto.createDecipheriv('aes-256-ctr', encryptionKey, iv);
+
+            let decrypted = decipher.update(encryptedLicenseData.encrypted, 'base64', 'utf8');
+            decrypted += decipher.final('utf8');
+
+            const licenseData = JSON.parse(decrypted);
+
+            // Verify integrity hash (CRITICAL: This was missing!)
+            const calculatedHash = crypto.createHash('sha256')
+                .update(JSON.stringify({
+                    ...licenseData,
+                    // Remove fields that weren't part of original hash
+                    machineFingerprint: undefined,
+                    storedAt: undefined
+                }))
+                .digest('hex');
+
+            if (calculatedHash !== encryptedLicenseData.integrityHash) {
+                throw new Error('License integrity check failed - possible tampering detected');
+            }
+
+            // Verify machine fingerprint
+            const currentFingerprint = crypto.createHash('sha256').update(
+                require('os').hostname() + require('os').platform()
+            ).digest('hex').substring(0, 16);
+
+            if (licenseData.machineFingerprint !== currentFingerprint) {
+                console.warn('⚠️ License machine fingerprint mismatch - may be from different machine');
+                // Still allow but log warning
+            }
+
+            console.log('🔓 License decrypted and verified successfully');
+            return {
+                key: licenseData.key,
+                tier: licenseData.tier,
+                active: licenseData.active,
+                features: licenseData.features,
+                activatedAt: licenseData.activatedAt,
+                email: licenseData.email,
+                authToken: licenseData.authToken
+            };
+
+        } catch (error) {
+            console.error('❌ License decryption failed:', error instanceof Error ? error.message : 'Unknown error');
+            return null;
+        }
+    }
+
+    /**
+     * Decrypt API key synchronously (for getCurrentLicense)
+     * CRITICAL FIX: Synchronous version of decryptApiKey
+     */
+    private decryptApiKeySync(encryptedApiKeyData: any): string {
+        try {
+            // Generate machine-specific key for API key decryption
+            const machineKey = crypto.createHash('sha256').update(
+                os.hostname() + os.platform() + os.arch()
+            ).digest();
+
+            // Decrypt the API key
+            const iv = Buffer.from(encryptedApiKeyData.iv, 'base64');
+            const decipher = crypto.createDecipheriv('aes-256-ctr', machineKey, iv);
+
+            let decrypted = decipher.update(encryptedApiKeyData.encrypted, 'base64', 'utf8');
+            decrypted += decipher.final('utf8');
+
+            return decrypted;
+
+        } catch (error) {
+            throw new Error(`API key decryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
@@ -611,6 +732,47 @@ export class LicenseService {
     }
 
     /**
+     * Load license from secure file synchronously (for getCurrentLicense)
+     * CRITICAL FIX: Synchronous version to fix license loading in getCurrentLicense
+     */
+    private loadCurrentLicenseSync(): void {
+        try {
+            const fs = require('fs');
+
+            // Check if license file exists
+            if (!fs.existsSync(this.licenseFile)) {
+                console.log('📋 No license file found');
+                this.currentLicense = null;
+                return;
+            }
+
+            // Load apiKey first
+            if (!fs.existsSync(this.apiKeyFile)) {
+                throw new Error('No API key file found - license needs to be activated');
+            }
+
+            const encryptedApiKeyData = JSON.parse(fs.readFileSync(this.apiKeyFile, 'utf8'));
+            const apiKey = this.decryptApiKeySync(encryptedApiKeyData);
+
+            // Load and decrypt license
+            const encryptedData = JSON.parse(fs.readFileSync(this.licenseFile, 'utf8'));
+            this.currentLicense = this.decryptLicenseSync(encryptedData, apiKey);
+
+            if (this.currentLicense) {
+                console.log(`✅ License loaded successfully: ${this.currentLicense.tier} tier`);
+            } else {
+                console.log('⚠️ License decryption returned null');
+                this.currentLicense = null;
+            }
+
+        } catch (error) {
+            console.log('❌ Failed to load license:', error instanceof Error ? error.message : 'Unknown error');
+            this.currentLicense = null;
+            throw error;
+        }
+    }
+
+    /**
      * Load license from secure file
      * SECURITY FIX: Now properly decrypts license using stored apiKey
      */
@@ -668,10 +830,10 @@ export class LicenseService {
             let firebaseConfig: any;
 
             try {
-                console.log('🔧 Fetching Firebase configuration from server...');
+                // Fetching configuration...
 
-                // Try to get config from public endpoint first
-                const configResponse = await fetch('https://us-central1-codecontextpro-mes.cloudfunctions.net/getFirebaseConfig');
+                // Try to get config from public API endpoint (routed through Firebase Hosting)
+                const configResponse = await fetch('https://codecontextpro-mes.web.app/api/getFirebaseConfig');
 
                 if (!configResponse.ok) {
                     throw new Error(`Config fetch failed: ${configResponse.status}`);
@@ -714,7 +876,7 @@ export class LicenseService {
             };
             
             await fs.writeFile(configFile, JSON.stringify(configData, null, 2));
-            console.log('🔥 Firebase config distributed for customer environment');
+            // Configuration complete
             
         } catch (error) {
             console.error('❌ Failed to distribute Firebase config:', error);

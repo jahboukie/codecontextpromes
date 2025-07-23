@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeContextPro Documentation - CLI Commands & Setup</title>
-    <meta name="description" content="Complete guide to installing and using CodeContextPro CLI with persistent AI memory">
+    <meta name="description" content="Complete guide to installing and using CodeContextPro CLI with unlimited AI memory">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -68,8 +68,8 @@
                 <h3 class="text-lg font-semibold text-blue-900 mb-3">3-Step Setup</h3>
                 <ol class="list-decimal list-inside space-y-2 text-blue-800">
                     <li><strong>Install</strong> the CLI globally via npm</li>
-                    <li><strong>Check status</strong> to see your current setup</li>
-                    <li><strong>Start using</strong> persistent AI memory commands</li>
+                    <li><strong>Activate</strong> your license key from purchase</li>
+                    <li><strong>Initialize</strong> and start using unlimited AI memory</li>
                 </ol>
             </div>
 
@@ -83,276 +83,128 @@
                 </div>
 
                 <div>
-                    <h4 class="font-semibold mb-2">2. Verify Installation</h4>
+                    <h4 class="font-semibold mb-2">2. Activate Your License</h4>
                     <div class="code-block">
-                        <span class="command">codecontextpro status</span><br><br>
-                        <span class="output">✅ Firebase initialized successfully</span><br>
-                        <span class="output">📊 CodeContext Pro Status</span><br>
-                        <span class="output">🎫 License Status: DEVELOPER (if no license activated)</span>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="font-semibold mb-2">3. Activate Your License (After Purchase)</h4>
-                    <div class="code-block">
-                        <span class="comment"># Use the license key from your success page</span><br>
-                        <span class="command">codecontextpro activate license_1234567890_abc123def</span><br><br>
-                        <span class="output">✅ License activated successfully!</span><br>
-                        <span class="output">   Tier: MEMORY</span><br>
+                        <span class="command">codecontextpro activate LICENSE_KEY_HERE</span><br><br>
+                        <span class="output">🔑 CodeContext Pro - Activate License</span><br>
+                        <span class="output">   License Key: license_1753***</span><br>
+                        <span class="output">🔍 Validation successful</span><br>
+                        <span class="output">✅ License activated successfully!</span><br><br>
                         <span class="output">🚀 Next step: Run "codecontextpro init" to initialize your project</span>
                     </div>
                 </div>
 
                 <div>
-                    <h4 class="font-semibold mb-2">4. Initialize Your Project</h4>
+                    <h4 class="font-semibold mb-2">3. Check Status & Initialize Project</h4>
                     <div class="code-block">
+                        <span class="command">codecontextpro status</span><br><br>
+                        <span class="output">🎫 CodeContext Pro - License Information</span><br>
+                        <span class="output">   Tier: MEMORY</span><br>
+                        <span class="output">   Status: ✅ Active</span><br>
+                        <span class="output">   Features: unlimited_memory_recalls, unlimited_projects, persistent_memory</span><br><br>
+                        <span class="comment">Navigate to your project folder</span><br>
                         <span class="command">codecontextpro init</span><br><br>
-                        <span class="output">✅ Project initialized successfully!</span><br>
-                        <span class="output">   License tier: MEMORY</span><br>
-                        <span class="output">   Memory recalls: 5,000/month</span>
+                        <span class="output">✅ Project initialized successfully!</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Available Commands -->
+        <!-- Essential Commands -->
         <section class="mb-12">
-            <h2 class="text-3xl font-bold mb-6 text-slate-900">📋 Available Commands</h2>
-
-            <!-- Status Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">📊</span>codecontextpro status
-                </h3>
-                <p class="text-gray-600 mb-4">Show your current license status, database location, and system health</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro status</span>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> Checking if CLI is working, verifying license, troubleshooting
-                </div>
-            </div>
-
-            <!-- Remember Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">🧠</span>codecontextpro remember
-                </h3>
-                <p class="text-gray-600 mb-4">Store information in persistent AI memory for future recall</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro remember "User prefers React hooks over class components"</span><br><br>
-                    <span class="comment"># With context and type</span><br>
-                    <span class="command">codecontextpro remember "API uses JWT tokens" --context "auth-system" --type "technical"</span>
-                </div>
-                <div class="mt-3">
-                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li><code class="bg-gray-100 px-1 rounded">-c, --context &lt;context&gt;</code> - Context for the memory (default: "cli-command")</li>
-                        <li><code class="bg-gray-100 px-1 rounded">-t, --type &lt;type&gt;</code> - Type of memory (default: "general")</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Recall Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">🔍</span>codecontextpro recall
-                </h3>
-                <p class="text-gray-600 mb-4">Search and retrieve memories from your persistent storage</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro recall "React hooks"</span><br><br>
-                    <span class="comment"># Limit results</span><br>
-                    <span class="command">codecontextpro recall "authentication" --limit 5</span>
-                </div>
-                <div class="mt-3">
-                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li><code class="bg-gray-100 px-1 rounded">-l, --limit &lt;number&gt;</code> - Maximum number of results (default: 10)</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Activate Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">🔑</span>codecontextpro activate
-                </h3>
-                <p class="text-gray-600 mb-4">Activate your purchased license with license key</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro activate license_1234567890_abc123def</span><br><br>
-                    <span class="output">✅ License activated successfully!</span><br>
-                    <span class="output">   Tier: MEMORY</span><br>
-                    <span class="output">🚀 Next step: Run "codecontextpro init"</span>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> After purchasing a license, use the key from your success page
-                </div>
-            </div>
-
-            <!-- Init Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">🚀</span>codecontextpro init
-                </h3>
-                <p class="text-gray-600 mb-4">Initialize CodeContext Pro project after license activation</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro init</span><br><br>
-                    <span class="output">✅ Project initialized successfully!</span><br>
-                    <span class="output">   License tier: MEMORY</span><br>
-                    <span class="output">   Memory recalls: 5,000/month</span>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> First-time setup after activating your license
-                </div>
-            </div>
-
-            <!-- License Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">🎫</span>codecontextpro license
-                </h3>
-                <p class="text-gray-600 mb-4">Show detailed license information and status</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro license</span><br><br>
-                    <span class="output">🎫 License Information</span><br>
-                    <span class="output">   Tier: MEMORY</span><br>
-                    <span class="output">   Status: ✅ Active</span><br>
-                    <span class="output">   Features: 5,000 Memory Recalls/month, Unlimited Projects</span>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> Checking license status, tier details, and available features
-                </div>
-            </div>
-
-            <!-- Purchase Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">💳</span>codecontextpro purchase
-                </h3>
-                <p class="text-gray-600 mb-4">Purchase or activate a CodeContextPro license</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro purchase</span><br><br>
-                    <span class="comment"># With specific options</span><br>
-                    <span class="command">codecontextpro purchase --tier memory --email user@example.com</span>
-                </div>
-                <div class="mt-3">
-                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li><code class="bg-gray-100 px-1 rounded">-t, --tier &lt;tier&gt;</code> - License tier (only "memory" available - no free tier)</li>
-                        <li><code class="bg-gray-100 px-1 rounded">--email &lt;email&gt;</code> - Email for checkout</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Scan Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">🔍</span>codecontextpro scan
-                </h3>
-                <p class="text-gray-600 mb-4">Analyze and store insights about your codebase structure</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro scan</span><br><br>
-                    <span class="comment"># Deep analysis with detailed insights</span><br>
-                    <span class="command">codecontextpro scan --deep</span><br><br>
-                    <span class="output">🔍 Scanning project structure...</span><br>
-                    <span class="output">✅ Found 15 TypeScript files, 8 React components</span><br>
-                    <span class="output">💾 Stored architectural insights in memory</span>
-                </div>
-                <div class="mt-3">
-                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li><code class="bg-gray-100 px-1 rounded">--deep</code> - Perform deep analysis with detailed architectural insights</li>
-                        <li><code class="bg-gray-100 px-1 rounded">--context &lt;context&gt;</code> - Add context tag to scan results</li>
-                    </ul>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> Starting work on a new project or after major structural changes
-                </div>
-            </div>
-
-            <!-- Export Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">📦</span>codecontextpro export
-                </h3>
-                <p class="text-gray-600 mb-4">Export your memory database to JSON or Markdown format</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro export</span><br><br>
-                    <span class="comment"># Export to specific format</span><br>
-                    <span class="command">codecontextpro export --format json --output memories.json</span><br><br>
-                    <span class="command">codecontextpro export --format markdown --output project-memories.md</span><br><br>
-                    <span class="output">📦 Exporting 247 memories...</span><br>
-                    <span class="output">✅ Export complete: memories.json (15.2 KB)</span>
-                </div>
-                <div class="mt-3">
-                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li><code class="bg-gray-100 px-1 rounded">--format &lt;format&gt;</code> - Export format: json, markdown (default: json)</li>
-                        <li><code class="bg-gray-100 px-1 rounded">--output &lt;file&gt;</code> - Output filename (default: memories.[format])</li>
-                        <li><code class="bg-gray-100 px-1 rounded">--context &lt;context&gt;</code> - Export only memories with specific context</li>
-                    </ul>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> Backing up memories, sharing project knowledge, or documentation
-                </div>
-            </div>
-
-            <!-- Sync Command -->
-            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-                <h3 class="text-xl font-semibold mb-3 text-slate-800">
-                    <span class="text-2xl mr-2">☁️</span>codecontextpro sync
-                </h3>
-                <p class="text-gray-600 mb-4">Synchronize memories with cloud storage (Memory Tier feature)</p>
-                <div class="code-block">
-                    <span class="command">codecontextpro sync</span><br><br>
-                    <span class="comment"># Force sync even if no changes detected</span><br>
-                    <span class="command">codecontextpro sync --force</span><br><br>
-                    <span class="output">☁️ Syncing with cloud storage...</span><br>
-                    <span class="output">↑ Uploading 12 new memories...</span><br>
-                    <span class="output">↓ Downloading 3 updates...</span><br>
-                    <span class="output">✅ Sync complete - 247 memories synchronized</span>
-                </div>
-                <div class="mt-3">
-                    <h4 class="font-medium text-gray-700 mb-2">Options:</h4>
-                    <ul class="text-sm text-gray-600 space-y-1">
-                        <li><code class="bg-gray-100 px-1 rounded">--force</code> - Force sync even if no changes detected</li>
-                        <li><code class="bg-gray-100 px-1 rounded">--dry-run</code> - Show what would be synced without making changes</li>
-                    </ul>
-                </div>
-                <div class="mt-3 text-sm text-gray-500">
-                    <strong>Use when:</strong> Working across multiple devices or sharing with team members
-                </div>
-                <div class="mt-3 bg-blue-50 border border-blue-200 rounded p-3">
-                    <p class="text-sm text-blue-800">
-                        <strong>💎 Memory Tier Feature:</strong> Cloud sync requires an active Memory Tier subscription
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Memory Tier Features -->
-        <section class="mb-12">
-            <h2 class="text-3xl font-bold mb-6 text-slate-900">✨ Memory Tier Features</h2>
+            <h2 class="text-3xl font-bold mb-6 text-slate-900">📋 Essential Commands</h2>
             
-            <div class="bg-gradient-to-r from-blue-500 to-emerald-500 text-white rounded-xl p-8 mb-6">
-                <h3 class="text-2xl font-bold mb-4">$19/month - Memory Tier</h3>
-                <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8">
+                <h3 class="text-lg font-semibold text-blue-900 mb-3">Core CLI Commands</h3>
+                <p class="text-blue-800">
+                    These are the main commands you'll use daily with CodeContextPro's unlimited AI memory system.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-6">
+                <!-- Setup Commands -->
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-slate-800 flex items-center">
+                        <span class="text-2xl mr-2">⚙️</span>Setup & Status
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="code-block text-sm">
+                                <span class="command">codecontextpro activate LICENSE_KEY</span><br>
+                                <span class="output">✅ License activated successfully!</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Activate your license after purchase</p>
+                        </div>
+                        
+                        <div>
+                            <div class="code-block text-sm">
+                                <span class="command">codecontextpro init</span><br>
+                                <span class="output">✅ Project initialized successfully!</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Initialize project after activation</p>
+                        </div>
+                        
+                        <div>
+                            <div class="code-block text-sm">
+                                <span class="command">codecontextpro status</span><br>
+                                <span class="output">🎫 Tier: MEMORY | Status: ✅ Active</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Check license and system status</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memory Commands -->
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-slate-800 flex items-center">
+                        <span class="text-2xl mr-2">🧠</span>AI Memory
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="code-block text-sm">
+                                <span class="command">codecontextpro remember "React hooks preferred"</span><br>
+                                <span class="output">💾 Memory stored successfully</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Store unlimited memories</p>
+                        </div>
+                        
+                        <div>
+                            <div class="code-block text-sm">
+                                <span class="command">codecontextpro recall "React"</span><br>
+                                <span class="output">🔍 Found 3 relevant memories</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Search your memory instantly</p>
+                        </div>
+                        
+                        <div>
+                            <div class="code-block text-sm">
+                                <span class="command">codecontextpro export --format markdown</span><br>
+                                <span class="output">📦 Exported memories to file</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Export your knowledge base</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Options -->
+            <div class="mt-8 bg-gray-50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 text-slate-800">💡 Command Options</h3>
+                <div class="grid md:grid-cols-2 gap-6 text-sm">
                     <div>
-                        <h4 class="font-semibold mb-2">✅ Core Features</h4>
-                        <ul class="space-y-1 text-blue-100">
-                            <li>• 5,000 Memory Recalls/month</li>
-                            <li>• Unlimited Memory Storage</li>
-                            <li>• Unlimited Projects</li>
-                            <li>• AES-256 Encryption</li>
+                        <h4 class="font-medium text-gray-700 mb-2">Remember Options:</h4>
+                        <ul class="text-gray-600 space-y-1">
+                            <li><code class="bg-white px-2 py-1 rounded">--context "auth-system"</code> - Add context</li>
+                            <li><code class="bg-white px-2 py-1 rounded">--type "technical"</code> - Set memory type</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 class="font-semibold mb-2">🚀 Advanced Features</h4>
-                        <ul class="space-y-1 text-blue-100">
-                            <li>• Persistent Memory</li>
-                            <li>• Cloud Sync</li>
-                            <li>• API Platform Support</li>
-                            <li>• Priority Support</li>
+                        <h4 class="font-medium text-gray-700 mb-2">Export Options:</h4>
+                        <ul class="text-gray-600 space-y-1">
+                            <li><code class="bg-white px-2 py-1 rounded">--format json</code> - JSON format</li>
+                            <li><code class="bg-white px-2 py-1 rounded">--output file.md</code> - Custom filename</li>
                         </ul>
                     </div>
                 </div>
@@ -381,52 +233,6 @@
                         <span class="command">codecontextpro recall "error handling"</span>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h3 class="font-semibold mb-3 text-slate-800">🏗️ Architecture Decisions</h3>
-                    <div class="code-block text-sm">
-                        <span class="command">codecontextpro remember "Microservices communicate via message queues, not direct HTTP" --type "architecture"</span><br><br>
-                        <span class="command">codecontextpro recall "microservices"</span>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-sm border p-6">
-                    <h3 class="font-semibold mb-3 text-slate-800">👥 Team Conventions</h3>
-                    <div class="code-block text-sm">
-                        <span class="command">codecontextpro remember "Team uses conventional commits format" --context "workflow"</span><br><br>
-                        <span class="command">codecontextpro remember "Code reviews require 2 approvals" --type "policy"</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Troubleshooting -->
-        <section class="mb-12">
-            <h2 class="text-3xl font-bold mb-6 text-slate-900">🔧 Troubleshooting</h2>
-            
-            <div class="space-y-6">
-                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6">
-                    <h3 class="font-semibold text-yellow-800 mb-2">❌ Firebase initialization failed</h3>
-                    <p class="text-yellow-700 mb-3">Missing Firebase configuration or network issues</p>
-                    <div class="code-block">
-                        <span class="command">codecontextpro status</span><br>
-                        <span class="comment"># Check your network connection and try again</span>
-                    </div>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-6">
-                    <h3 class="font-semibold text-blue-800 mb-2">📋 No license found</h3>
-                    <p class="text-blue-700 mb-3">CLI running in development mode</p>
-                    <div class="code-block">
-                        <span class="command">codecontextpro purchase</span><br>
-                        <span class="comment"># Enter your license key from the success page</span>
-                    </div>
-                </div>
-
-                <div class="bg-green-50 border-l-4 border-green-500 p-6">
-                    <h3 class="font-semibold text-green-800 mb-2">✅ System ready for development</h3>
-                    <p class="text-green-700">CLI is working correctly and ready to use</p>
-                </div>
             </div>
         </section>
 
@@ -437,7 +243,7 @@
             <div class="bg-gray-100 rounded-lg p-8 text-center">
                 <h3 class="text-xl font-semibold mb-4">Need Help?</h3>
                 <p class="text-gray-600 mb-6">
-                    Our team is here to help you get the most out of CodeContextPro's persistent AI memory system.
+                    Our team is here to help you get the most out of CodeContextPro's unlimited AI memory system.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
@@ -459,7 +265,7 @@
                 <span class="text-xl font-bold">CodeContextPro</span>
             </div>
             <p class="text-gray-400">
-                Revolutionary AI cognitive upgrade with persistent memory
+                Revolutionary AI cognitive upgrade with unlimited memory
             </p>
         </div>
     </footer>

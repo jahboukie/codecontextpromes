@@ -150,7 +150,7 @@ export class CodeContextCLI {
             }
 
             // Get current license and auth token
-            const currentLicense = this.licenseService.getCurrentLicense();
+            const currentLicense = await this.licenseService.getCurrentLicenseAsync();
             if (!currentLicense.key || !currentLicense.email || !currentLicense.authToken) {
                 throw new Error('License not properly activated. Please re-activate your license.');
             }
@@ -413,14 +413,11 @@ export class CodeContextCLI {
             const result = await activationLicenseService.activateLicense(licenseKey);
             
             console.log('✅ License activated successfully!');
-            console.log(`   Tier: ${result.tier.toUpperCase()}`);
-            console.log(`   Status: ${result.active ? 'Active' : 'Inactive'}`);
-            console.log(`   Features: ${result.features?.join(', ') || 'Basic features'}`);
-            
+
             // CRITICAL: Now initialize Firebase with distributed config for reporting
             try {
                 activationFirebaseService.initializeIfNeeded();
-                
+
                 // Report successful activation
                 await activationFirebaseService.reportUsage('license_activation_success', {
                     tier: result.tier,
@@ -516,17 +513,17 @@ export class CodeContextCLI {
             console.log('🎫 CodeContext Pro - License Information\n');
             
             const licenseStatus = this.licenseService.getLicenseStatus();
-            const currentLicense = this.licenseService.getCurrentLicense();
+            const currentLicense = await this.licenseService.getCurrentLicenseAsync();
             
             console.log('License Details:');
             console.log(`   Tier: ${licenseStatus.tier.toUpperCase()}`);
             console.log(`   Status: ${licenseStatus.active ? '✅ Active' : '❌ Inactive'}`);
             console.log(`   Features: ${licenseStatus.features.join(', ')}`);
-            
+
             if (currentLicense.key && !licenseStatus.mock) {
                 console.log(`   License Key: ${currentLicense.key.substring(0, 12)}***`);
                 console.log(`   Email: ${currentLicense.email || 'Not available'}`);
-                
+
                 if (currentLicense.activatedAt) {
                     console.log(`   Activated: ${new Date(currentLicense.activatedAt).toLocaleDateString()}`);
                 }

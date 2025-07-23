@@ -75,7 +75,7 @@ export class FirebaseService {
             
             if (fs.existsSync(configPath)) {
                 const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                console.log('🔥 Using distributed Firebase config (customer environment)');
+                // Using distributed config
                 return configData.firebase;
             }
             
@@ -87,7 +87,7 @@ export class FirebaseService {
                 const parentConfigPath = path.join(currentDir, '.codecontext', 'firebase-config.json');
                 if (fs.existsSync(parentConfigPath)) {
                     const configData = JSON.parse(fs.readFileSync(parentConfigPath, 'utf8'));
-                    console.log('🔥 Using distributed Firebase config from parent directory');
+                    // Using distributed config from parent directory
                     return configData.firebase;
                 }
                 currentDir = path.dirname(currentDir);
@@ -137,9 +137,8 @@ export class FirebaseService {
             const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
 
             if (missingFields.length > 0) {
-                console.warn(`⚠️ Incomplete Firebase configuration - missing: ${missingFields.join(', ')}`);
-                console.warn('   Some features may not work until configuration is complete');
-                return; // Exit gracefully instead of throwing error
+                // Configuration incomplete - exit gracefully
+                return;
             }
 
             // Initialize Firebase app if not already initialized
@@ -159,7 +158,7 @@ export class FirebaseService {
                 console.log('🔧 Connected to Firebase Functions emulator');
             }
 
-            console.log('✅ Firebase initialized successfully');
+            // Firebase initialized
 
         } catch (error) {
             console.error('❌ Firebase initialization failed:', error);
@@ -336,21 +335,7 @@ export class FirebaseService {
 
             // CRITICAL FIX: Check if Firebase is available before using it
             if (!this.functions || !this.app) {
-                console.warn('⚠️ Firebase not available - using mock validation for customer environment');
-
-                // Mock validation for customer environments without Firebase config
-                // This allows license activation to proceed until proper config is distributed
-                return {
-                    licenseId: licenseKey,
-                    tier: 'founders', // Default tier for mock validation
-                    status: 'active',
-                    features: ['unlimited_memory', 'unlimited_execution', 'multi_project'],
-                    activatedAt: new Date().toISOString(),
-                    email: 'customer@example.com', // Will be updated when Firebase is available
-                    apiKey: 'mock_encryption_key_' + Date.now(),
-                    createdAt: new Date().toISOString(),
-                    mockValidation: true // Flag to indicate this is mock validation
-                };
+                throw new Error('Firebase not initialized. Please ensure Firebase configuration is available.');
             }
 
             console.log(`🔍 Calling Firebase validateLicense function...`);
@@ -473,15 +458,7 @@ export class FirebaseService {
 
             // CRITICAL FIX: Check if Firebase is available before using it
             if (!this.functions || !this.app) {
-                console.warn('⚠️ Firebase not available - using mock auth token for customer environment');
-
-                // Mock auth token for customer environments without Firebase config
-                return {
-                    token: 'mock_auth_token_' + Date.now(),
-                    uid: 'mock_user_' + licenseKey.slice(-8),
-                    expiresIn: 3600,
-                    mockToken: true // Flag to indicate this is mock token
-                };
+                throw new Error('Firebase not initialized. Please ensure Firebase configuration is available.');
             }
 
             console.log(`🔑 Calling Firebase getAuthToken function...`);

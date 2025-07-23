@@ -51,7 +51,7 @@ export class MemoryEngine {
         this.projectPath = projectPath;
         this.dbPath = path.join(projectPath, '.codecontext', 'memory.db');
         this.database = new MemoryDatabase(this.dbPath);
-        this.validateProjectPath();
+        // Don't validate project path in constructor - let init command create the directory
     }
 
     /**
@@ -76,6 +76,9 @@ export class MemoryEngine {
      * Phase 1 Sprint 1.3: Real SQLite implementation
      */
     async storeMemory(content: string, context: string = 'cli-command', type: string = 'general'): Promise<number> {
+        // Validate project is initialized (for non-init operations)
+        this.validateProjectPath();
+
         // Ensure database is initialized
         await this.initialize();
 
@@ -187,6 +190,7 @@ export class MemoryEngine {
 
     /**
      * Validate project path exists and has CodeContext Pro structure
+     * Only called for operations that require an initialized project (not during init)
      */
     private validateProjectPath(): void {
         if (!fs.existsSync(this.projectPath)) {
@@ -195,7 +199,18 @@ export class MemoryEngine {
 
         const codecontextDir = path.join(this.projectPath, '.codecontext');
         if (!fs.existsSync(codecontextDir)) {
-            throw new Error('CodeContext Pro not initialized. Run "codecontext init" first.');
+            throw new Error('CodeContext Pro not initialized. Run "codecontextpro init" first.');
+        }
+    }
+
+    /**
+     * Create project structure during initialization
+     */
+    private createProjectStructure(): void {
+        const codecontextDir = path.join(this.projectPath, '.codecontext');
+        if (!fs.existsSync(codecontextDir)) {
+            fs.mkdirSync(codecontextDir, { recursive: true });
+            console.log('📁 Created .codecontext directory');
         }
     }
 
@@ -253,7 +268,12 @@ export class MemoryEngine {
      * Used by codecontextpro init command
      */
     async initProject(): Promise<{ path: string; dbPath: string; initialized: boolean }> {
+        // Create project structure first (this is what init does)
+        this.createProjectStructure();
+
+        // Now initialize the database
         await this.initialize();
+
         return this.getProjectInfo();
     }
 }

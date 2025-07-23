@@ -36,6 +36,10 @@
         "function": "getLicenseBySession"
       },
       {
+        "source": "/api/getFirebaseConfig",
+        "function": "getFirebaseConfig"
+      },
+      {
         "source": "/success.html",
         "destination": "/success.html"
       },

@@ -29,6 +29,7 @@ const STRIPE_SECRET_KEY = defineSecret('STRIPE_SECRET_KEY');
 const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
 const MEMORY_PRICE_ID = defineSecret('MEMORY_PRICE_ID');
 const ENCRYPTION_MASTER_KEY = defineSecret('ENCRYPTION_MASTER_KEY');
+const FIREBASE_WEB_API_KEY = defineSecret('FIREBASE_WEB_API_KEY');
 
 // Note: Stripe instances are created within functions to access secrets properly
 
@@ -101,6 +102,8 @@ function validateNoSecrets(data: any): void {
     }
 }
 
+
+
 /**
  * Get Pricing HTTP Function (v2)
  */
@@ -137,7 +140,7 @@ export const getPricingHttp = onRequest(
                             period: 'month',
                             description: 'Building the Future Together - Support our API platform development',
                             limits: {
-                                memory: 5000,
+                                memory: 'unlimited',
                                 projects: 'unlimited',
                                 executions: 'coming-soon'
                             },
@@ -354,7 +357,7 @@ export const stripeWebhook = onRequest(
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
                     activatedAt: admin.firestore.FieldValue.serverTimestamp(),
                     features: tier === 'memory' ? [
-                        'memory_recalls_5000',
+                        'unlimited_memory_recalls',
                         'unlimited_projects',
                         'persistent_memory',
                         'cloud_sync',
@@ -373,16 +376,18 @@ export const stripeWebhook = onRequest(
 
                 // Create Firebase Auth user (if new) as per Phase 2.1 spec
                 try {
-                    await admin.auth().createUser({
+                    const userRecord = await admin.auth().createUser({
                         uid: `license-user-${licenseId.replace('license_', '')}`,
                         email: email,
                         emailVerified: true,
-                        displayName: `CodeContext Pro User`,
-                        customClaims: {
-                            licenseId: licenseId,
-                            tier: tier,
-                            licenseStatus: 'active'
-                        }
+                        displayName: `CodeContext Pro User`
+                    });
+
+                    // Set custom claims separately
+                    await admin.auth().setCustomUserClaims(userRecord.uid, {
+                        licenseId: licenseId,
+                        tier: tier,
+                        licenseStatus: 'active'
                     });
                     console.log('✅ Firebase Auth user created for license:', licenseId);
                 } catch (authError: any) {
@@ -618,7 +623,7 @@ export const getAuthToken = onCall(
             };
 
             if (licenseData.tier === 'memory') {
-                customClaims.memoryLimit = 5000;
+                customClaims.memoryLimit = 'unlimited';
                 customClaims.unlimitedProjects = true;
                 customClaims.cloudSync = true;
                 customClaims.apiPlatformSupport = true;
@@ -747,10 +752,10 @@ export const reportUsage = onCall(async (data, context) => {
  * CRITICAL: Enforces usage limits with JWT verification
  */
 export const validateUsage = onCall(
-    async (data, context) => {
+    async (request) => {
         try {
             // Verify Firebase ID Token (Authentication required)
-            if (!context.auth || !context.auth.token) {
+            if (!request.auth || !request.auth.token) {
                 console.log('❌ validateUsage: No auth token provided');
                 throw new HttpsError(
                     'unauthenticated',
@@ -758,16 +763,16 @@ export const validateUsage = onCall(
                 );
             }
 
-            if (!data || typeof data !== 'object') {
+            if (!request.data || typeof request.data !== 'object') {
                 throw new HttpsError(
                     'invalid-argument',
                     'Invalid request data'
                 );
             }
 
-            validateNoSecrets(data);
+            validateNoSecrets(request.data);
 
-            const { licenseKey, operation, email } = (data as unknown) as {
+            const { licenseKey, operation, email } = (request.data as unknown) as {
                 licenseKey: string;
                 operation: string;
                 email: string;
@@ -796,7 +801,7 @@ export const validateUsage = onCall(
             }
 
             // CRITICAL: Ensure authenticated user matches email in request
-            const authEmail = context.auth.token.email;
+            const authEmail = request.auth.token.email;
             if (authEmail !== email) {
                 console.log('❌ validateUsage: Email mismatch', {
                     authEmail: authEmail?.substring(0, 3) + '***',
@@ -895,13 +900,13 @@ export const validateUsage = onCall(
             // Define operation limits based on tier
             let operationLimits: Record<string, number>;
             if (licenseData.tier === 'memory') {
-                // Memory tier: 5,000 recalls/month, unlimited others
+                // Memory tier: UNLIMITED for all operations - more attractive offer!
                 operationLimits = {
-                    recall: 5000,
-                    remember: 999999,
-                    scan: 999999,
-                    export: 999999,
-                    execute: 999999 // Will be limited when execution is implemented
+                    recall: 999999999,  // Effectively unlimited
+                    remember: 999999999,
+                    scan: 999999999,
+                    export: 999999999,
+                    execute: 999999999 // Unlimited execution when implemented
                 };
             } else {
                 // Free tier: 20/20/20 limits
@@ -959,8 +964,8 @@ export const validateUsage = onCall(
                 operation,
                 usage: {
                     current: newCount,
-                    limit: limit,
-                    remaining: limit - newCount
+                    limit: licenseData.tier === 'memory' ? 'unlimited' : limit,
+                    remaining: licenseData.tier === 'memory' ? 'unlimited' : (limit - newCount)
                 },
                 tier: licenseData.tier,
                 monthKey
@@ -1046,6 +1051,8 @@ export const getFirebaseConfig = onRequest(
         cors: true, // Allow all origins for this public config endpoint
         memory: '128MiB',
         timeoutSeconds: 30,
+        invoker: 'public', // CRITICAL: Allow public access without authentication
+        secrets: [FIREBASE_WEB_API_KEY], // SECURITY: Load API key from Secret Manager
     },
     async (req: Request, res: Response) => {
         try {
@@ -1069,17 +1076,27 @@ export const getFirebaseConfig = onRequest(
                 return;
             }
 
-            // Firebase client configuration (using environment variables for security)
-            // SECURITY FIX: Never hardcode API keys in source code
+            // Firebase client configuration (using Secret Manager for API key)
+            // SECURITY: API key from Secret Manager, other config from environment/defaults
             const firebaseConfig = {
-                apiKey: process.env.FIREBASE_API_KEY,
-                authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-                projectId: process.env.FIREBASE_PROJECT_ID,
-                storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-                messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-                appId: process.env.FIREBASE_APP_ID,
-                databaseURL: process.env.FIREBASE_DATABASE_URL
+                apiKey: FIREBASE_WEB_API_KEY.value(), // SECURE: Read from Secret Manager
+                authDomain: process.env.FIREBASE_AUTH_DOMAIN || "codecontextpro-mes.firebaseapp.com",
+                projectId: process.env.FIREBASE_PROJECT_ID || "codecontextpro-mes",
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "codecontextpro-mes.firebasestorage.app",
+                messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "168225201154",
+                appId: process.env.FIREBASE_APP_ID || "1:168225201154:web:e035d44d4a093ddcf7db1b",
+                databaseURL: process.env.FIREBASE_DATABASE_URL || "https://codecontextpro-mes-default-rtdb.firebaseio.com"
             };
+
+            // Validate that we have the required configuration
+            if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+                console.error('❌ Firebase configuration incomplete - missing API key or project ID');
+                res.status(500).json({
+                    error: 'Firebase configuration not properly set up on server',
+                    message: 'Please contact support - server configuration issue'
+                });
+                return;
+            }
 
             console.log('✅ Firebase config served to customer CLI');
 
