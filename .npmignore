@@ -27,6 +27,14 @@ IMPORTANT_DOCS_NEVER_COMMIT/
 FIREBASE_FUNCTIONS_TEST_FIX_REPORT.md
 LICENSING.md
 
+# CRITICAL: Exclude codecontext-ai directory (contains sensitive development tools)
+codecontext-ai/
+
+# Temporary files
+debug_*.py
+phase2-*.js
+*.tgz
+
 # Keep only essential files for CLI
 !dist/
 !package.json
