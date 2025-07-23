@@ -1032,3 +1032,71 @@ export const getLicenseBySession = onRequest(
         }
     }
 );
+
+/**
+ * Get Firebase Configuration for Customer CLI Distribution
+ * CRITICAL: Solves the Firebase config distribution issue for customer environments
+ *
+ * This is a PUBLIC endpoint that serves Firebase client configuration.
+ * Firebase client config is meant to be public (it's in every web app's source).
+ * The API key restrictions in Google Cloud Console provide the actual security.
+ */
+export const getFirebaseConfig = onRequest(
+    {
+        cors: true, // Allow all origins for this public config endpoint
+        memory: '128MiB',
+        timeoutSeconds: 30,
+    },
+    async (req: Request, res: Response) => {
+        try {
+            console.log('🔧 Firebase config requested by customer CLI');
+
+            // Add security headers
+            res.set('Access-Control-Allow-Origin', '*');
+            res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+            res.set('Access-Control-Allow-Headers', 'Content-Type');
+            res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+
+            // Handle preflight OPTIONS request
+            if (req.method === 'OPTIONS') {
+                res.status(204).send('');
+                return;
+            }
+
+            // Only allow GET requests
+            if (req.method !== 'GET') {
+                res.status(405).json({ error: 'Method not allowed' });
+                return;
+            }
+
+            // Firebase client configuration (public information)
+            // This is the same config that would be in any web app's source code
+            const firebaseConfig = {
+                apiKey: "AIzaSyBYurWJAXQ8dEgyi4V8NCVUd9TT1-vl0yw",
+                authDomain: "codecontextpro-mes.firebaseapp.com",
+                projectId: "codecontextpro-mes",
+                storageBucket: "codecontextpro-mes.firebasestorage.app",
+                messagingSenderId: "168225201154",
+                appId: "1:168225201154:web:e035d44d4a093ddcf7db1b",
+                databaseURL: "https://codecontextpro-mes-default-rtdb.firebaseio.com"
+            };
+
+            console.log('✅ Firebase config served to customer CLI');
+
+            // Return the configuration
+            res.status(200).json({
+                ...firebaseConfig,
+                version: "1.0.0",
+                distributedAt: new Date().toISOString(),
+                note: "This configuration enables your CLI to connect to CodeContextPro-MES services"
+            });
+
+        } catch (error) {
+            console.error('❌ Error serving Firebase config:', error);
+            res.status(500).json({
+                error: 'Failed to retrieve Firebase configuration',
+                message: 'Please try again or contact support'
+            });
+        }
+    }
+);

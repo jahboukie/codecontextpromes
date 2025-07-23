@@ -10,7 +10,7 @@ import { MemoryEngine } from './MemoryEngine';
 import { FirebaseService } from './FirebaseService';
 import { LicenseService } from './LicenseService';
 
-export const version = "1.0.0";
+export const version = "1.2.1";
 
 export class CodeContextCLI {
     private memoryEngine: MemoryEngine;
@@ -18,10 +18,10 @@ export class CodeContextCLI {
     private licenseService: LicenseService;
     private program: Command;
 
-    constructor(projectPath: string = process.cwd()) {
+    constructor(projectPath: string = process.cwd(), skipFirebaseInit: boolean = false) {
         this.memoryEngine = new MemoryEngine(projectPath);
-        this.firebaseService = new FirebaseService();
-        this.licenseService = new LicenseService(projectPath);
+        this.firebaseService = new FirebaseService(skipFirebaseInit);
+        this.licenseService = new LicenseService(projectPath, skipFirebaseInit);
         this.program = new Command();
         
         this.setupCommands();
@@ -404,19 +404,32 @@ export class CodeContextCLI {
             console.log('🔑 CodeContext Pro - Activate License');
             console.log(`   License Key: ${licenseKey.substring(0, 12)}***`);
             
-            // Activate license through LicenseService
-            const result = await this.licenseService.activateLicense(licenseKey);
+            // CRITICAL FIX: Create services that skip Firebase initialization
+            // This allows customers to activate without Firebase config being present
+            const activationLicenseService = new LicenseService(process.cwd(), true);
+            const activationFirebaseService = (activationLicenseService as any).firebaseService;
+            
+            // Activate license through LicenseService with deferred Firebase init
+            const result = await activationLicenseService.activateLicense(licenseKey);
             
             console.log('✅ License activated successfully!');
             console.log(`   Tier: ${result.tier.toUpperCase()}`);
             console.log(`   Status: ${result.active ? 'Active' : 'Inactive'}`);
             console.log(`   Features: ${result.features?.join(', ') || 'Basic features'}`);
             
-            // Report successful activation
-            await this.firebaseService.reportUsage('license_activation_success', {
-                tier: result.tier,
-                licenseId: licenseKey.substring(0, 12) + '***'
-            });
+            // CRITICAL: Now initialize Firebase with distributed config for reporting
+            try {
+                activationFirebaseService.initializeIfNeeded();
+                
+                // Report successful activation
+                await activationFirebaseService.reportUsage('license_activation_success', {
+                    tier: result.tier,
+                    licenseId: licenseKey.substring(0, 12) + '***'
+                });
+            } catch (reportError) {
+                console.warn('⚠️ Could not report activation (non-blocking):', reportError);
+                // Don't fail activation if reporting fails
+            }
             
             console.log('\n🚀 Next step: Run "codecontextpro init" to initialize your project');
 
@@ -424,11 +437,17 @@ export class CodeContextCLI {
             console.error('❌ License activation failed:');
             console.error(`   ${error instanceof Error ? error.message : 'Unknown error'}`);
             
-            // Report failed activation
-            await this.firebaseService.reportUsage('license_activation_failure', {
-                licenseId: licenseKey.substring(0, 12) + '***',
-                error: error instanceof Error ? error.message : 'Unknown error'
-            });
+            // Try to report failed activation if possible
+            try {
+                const reportingService = new FirebaseService(true);
+                reportingService.initializeIfNeeded();
+                await reportingService.reportUsage('license_activation_failure', {
+                    licenseId: licenseKey.substring(0, 12) + '***',
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                });
+            } catch (reportError) {
+                // Ignore reporting errors during failure
+            }
             
             process.exit(1);
         }
@@ -691,7 +710,14 @@ export class CodeContextCLI {
  */
 export function main(argv?: string[]): void {
     try {
-        const cli = new CodeContextCLI();
+        // CRITICAL: Skip Firebase initialization if no Firebase config is present (customer environment)
+        const hasFirebaseConfig = !!(
+            process.env.FIREBASE_PROJECT_ID || 
+            process.env.FIREBASE_API_KEY ||
+            require('fs').existsSync(require('path').join(process.cwd(), '.codecontext', 'firebase-config.json'))
+        );
+        
+        const cli = new CodeContextCLI(process.cwd(), !hasFirebaseConfig);
         cli.run(argv);
     } catch (error) {
         console.error('❌ Failed to initialize CodeContext Pro:');

@@ -58,6 +58,7 @@ license.secure
 # CodeContext Pro and Claude directories
 .codecontext/
 .claude/
+codecontext-ai/
 
 # Documentation files (except README)
 *.md
@@ -79,3 +80,9 @@ claude-use-this/
 
 # Storefront (separate repository with own CI/CD pipeline)
 landing-page/
+
+# Temporary test files (development only)
+test-*.js
+debug_*.py
+phase2-*.js
+*.tgz
