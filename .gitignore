@@ -1,0 +1,99 @@
+
+# CodeContextPro-MES Security-First .gitignore
+
+# Environment Variables & Secrets (CRITICAL SECURITY)
+.env
+.env.local
+.env.production
+.env.test
+*.pem
+*.key
+*.p12
+.secrets/
+
+# Firebase Secrets
+firebase-setup/.env
+firebase-setup/service-account.json
+firebase-setup/config/production.json
+
+# Generated HTML files with secrets (NEVER COMMIT THESE)
+firebase-setup/public/index.html
+
+# Compiled JavaScript files (may contain secrets from source)
+dist/
+*.js.map
+
+# CodeContext Pro
+.codecontext/memory.db
+.codecontext/logs/
+.codecontext/sandbox/
+.codecontext/*.enc
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Build outputs
+dist/
+build/
+.next/
+.firebase/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# License files (store securely, not in repo)
+license.secure
+*.license
+
+# CodeContext Pro and Claude directories
+.codecontext/
+.claude/
+codecontext-ai/
+
+# Documentation files (except README)
+*.md
+!README.md
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.example
+
+# Note: package-lock.json is tracked for CI/CD reproducible builds
+
+# Important documentation (never commit to public repo)
+IMPORTANT_DOCS_NEVER_COMMIT/
+
+# Developer tools and CLI (local development only)
+claude-use-this/
+
+# Storefront (separate repository with own CI/CD pipeline)
+landing-page/
+
+# Temporary test files (development only)
+test-*.js
+debug_*.py
+phase2-*.js
+*.tgz
+hn-memory-test.js
+memory-export.json
+memory-test-export.json
+test-results.json

@@ -1,0 +1,46 @@
+{
+  "name": "codeconmem",
+  "version": "1.0.0",
+  "description": "Simple, reliable AI memory for developers - SQLite3 based",
+  "main": "dist/index.js",
+  "bin": {
+    "codeconmem": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "ai",
+    "memory",
+    "sqlite",
+    "developer-tools",
+    "coding-assistant"
+  ],
+  "author": "CodeContext Team",
+  "license": "MIT",
+  "dependencies": {
+    "sqlite3": "^5.1.6",
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/sqlite3": "^3.1.11",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.0",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

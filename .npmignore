@@ -1,0 +1,41 @@
+# Development and sensitive files
+src/
+__tests__/
+*.test.ts
+*.test.js
+.ai-memory/
+.github/
+.vscode/
+.codecontext/
+.claude/
+.env
+.env.*
+firebase-setup/
+test-*.js
+*-test-*.js
+*.json.map
+jest.config.js
+tsconfig.json
+.hintrc
+build_config_analysis.js
+landing-page-migration-simulation.js
+memory-export.json
+memory-test-export.json
+test-results.json
+hn-memory-test.js
+IMPORTANT_DOCS_NEVER_COMMIT/
+FIREBASE_FUNCTIONS_TEST_FIX_REPORT.md
+LICENSING.md
+
+# CRITICAL: Exclude codecontext-ai directory (contains sensitive development tools)
+codecontext-ai/
+
+# Temporary files
+debug_*.py
+phase2-*.js
+*.tgz
+
+# Keep only essential files for CLI
+!dist/
+!package.json
+!README.md

@@ -1,0 +1,120 @@
+name: Security-First CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  # NODE_ENV: 'production' # Removed to allow devDependencies installation for linting
+
+jobs:
+  security-audit:
+    name: Security Audit & SAST
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run ESLint Security Rules
+      run: npm run lint
+      
+    - name: Run NPM Security Audit
+      run: npm audit --audit-level moderate
+      
+    - name: Static Application Security Testing (SAST)
+      uses: github/super-linter@v4
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_ALL_CODEBASE: true
+        # Disable Super-Linter's ESLint for JS/TS (we handle this with npm run lint)
+        VALIDATE_JAVASCRIPT_ES: false
+        VALIDATE_TYPESCRIPT_ES: false
+        # Explicitly enable other linters we want
+        VALIDATE_JSON: true
+        VALIDATE_YAML: true
+        VALIDATE_MARKDOWN: true
+        VALIDATE_DOCKERFILE: true
+        VALIDATE_BASH: true
+        VALIDATE_PYTHON: true
+        
+    - name: Secret Scanning
+      run: |
+        # Check for potential secrets in code (excluding test regex patterns)
+        if grep -r "sk_" --include="*.ts" --include="*.js" src/ | grep -v "/.*sk_.*/" | grep -v "toMatch.*sk_" | grep -q .; then
+          echo "❌ Potential Stripe secret key found in source code!"
+          exit 1
+        fi
+        if grep -r "firebase_private_key" --include="*.ts" --include="*.js" src/; then
+          echo "❌ Potential Firebase private key found in source code!"
+          exit 1
+        fi
+        echo "✅ No obvious secrets found in source code"
+
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: security-audit
+    
+    env:
+      FIREBASE_API_KEY: "test_api_key_for_ci_cd"
+      FIREBASE_AUTH_DOMAIN: "test-project.firebaseapp.com"
+      FIREBASE_PROJECT_ID: "test-project-id"
+      FIREBASE_STORAGE_BUCKET: "test-project.appspot.com"
+      FIREBASE_MESSAGING_SENDER_ID: "1234567890"
+      FIREBASE_APP_ID: "1:1234567890:web:abcdef123456"
+      # Ensure Docker is available for this runner (GitHub-hosted runners usually have it)
+      # Explicitly tell MES to use a specific port that won't conflict
+      PORT: 3001
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build all (CLI and Execution Engine)
+      run: npm run build:execution && npm run build
+
+    - name: Start CodeContext MES (background)
+      # Use `nohup` and `&` to run in background, then wait for it to be ready
+      run: |
+        npm run start:mes > mes.log 2>&1 &
+        echo "Waiting for MES to start..."
+        for i in $(seq 1 30); do # Up to 30 seconds wait
+          curl -s http://localhost:${{ env.PORT }}/health && break
+          sleep 1
+        done
+        if ! curl -s http://localhost:${{ env.PORT }}/health; then
+          echo "MES failed to start. Log:"
+          cat mes.log
+          exit 1
+        fi
+        echo "MES is running."
+
+    - name: Run Unit Tests (non-MES)
+      run: npm run test:unit
+
+    - name: Run MES Integration Tests (confidence-based)
+      # This runs `test:mes` which uses `jest` and calls `runMESUnitTest` internally
+      run: npm run test:mes
