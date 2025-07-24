@@ -19,6 +19,10 @@ firebase-setup/config/production.json
 # Generated HTML files with secrets (NEVER COMMIT THESE)
 firebase-setup/public/index.html
 
+# Compiled JavaScript files (may contain secrets from source)
+dist/
+*.js.map
+
 # CodeContext Pro
 .codecontext/memory.db
 .codecontext/logs/

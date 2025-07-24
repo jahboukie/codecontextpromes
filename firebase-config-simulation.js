@@ -22,7 +22,7 @@ class FirebaseConfigSimulation {
         // Simulate Firebase Functions config access
         const mockFunctionsConfig = {
             firebase: {
-                api_key: "AIzaSyBYurWJAXQ8dEgyi4V8NCVUd9TT1-vl0yw",
+                api_key: "AIzaSyMOCK_API_KEY_FOR_TESTING_ONLY_123456789",
                 auth_domain: "codecontextpro-mes.firebaseapp.com",
                 project_id: "codecontextpro-mes",
                 storage_bucket: "codecontextpro-mes.firebasestorage.app",
@@ -34,7 +34,7 @@ class FirebaseConfigSimulation {
 
         // Simulate environment variable fallback
         const mockEnvVars = {
-            FIREBASE_API_KEY: "AIzaSyBYurWJAXQ8dEgyi4V8NCVUd9TT1-vl0yw",
+            FIREBASE_API_KEY: "AIzaSyMOCK_API_KEY_FOR_TESTING_ONLY_123456789",
             FIREBASE_AUTH_DOMAIN: "codecontextpro-mes.firebaseapp.com",
             FIREBASE_PROJECT_ID: "codecontextpro-mes",
             FIREBASE_STORAGE_BUCKET: "codecontextpro-mes.firebasestorage.app",
