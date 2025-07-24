@@ -125,7 +125,7 @@
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     <a href="#pricing" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg inline-flex items-center">
                         <span class="mr-2">⚡</span>
-                        {{PRICING_CTA_TEXT}} - ${{PRICING_AMOUNT}}/{{PRICING_INTERVAL}}
+                        {{PRICING_CTA_TEXT}} - ${{PRICING_EARLY_ADOPTER_AMOUNT}}/{{PRICING_INTERVAL}}
                     </a>
                 </div>
             </div>
@@ -252,55 +252,143 @@
                 </div>
             </div>
 
-            <!-- Memory Tier Pricing Card -->
-            <div class="flex justify-center max-w-lg mx-auto">
-                <div class="relative w-full">
+            <!-- Three-Tier Pricing Cards -->
+            <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+
+                <!-- Free Trial Tier -->
+                <div class="relative">
+                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 h-full">
+                        <div class="text-center mb-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">{{PRICING_FREE_TRIAL_NAME}}</h3>
+                            <div class="text-5xl font-bold text-gray-900 mb-2">${{PRICING_FREE_TRIAL_AMOUNT}}</div>
+                            <div class="text-gray-600">/{{PRICING_INTERVAL}}</div>
+                            <div class="text-sm mt-2 text-gray-500">Perfect for trying out</div>
+                        </div>
+
+                        <div class="space-y-3 mb-8">
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_FREE_TRIAL_OPERATIONS}} operations/month</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_FREE_TRIAL_PROJECTS}} project</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_FREE_TRIAL_SUPPORT}} support</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_FREE_TRIAL_FEATURES}}</span>
+                            </div>
+                        </div>
+
+                        <button
+                            class="w-full bg-gray-100 text-gray-800 hover:bg-gray-200 font-bold text-lg py-4 rounded-lg transition-colors"
+                            onclick="startFreeTrial()"
+                        >
+                            Start Free Trial
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Early Adopter Tier (Featured) -->
+                <div class="relative">
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                         <div class="bg-blue-500 text-white px-4 py-2 text-sm font-semibold rounded-lg">
                             <span class="mr-1">⚡</span>
-                            {{PRICING_TIER_NAME}}
+                            MOST POPULAR
                         </div>
                     </div>
-                    
-                    <div class="bg-gradient-to-br from-blue-500 to-emerald-400 rounded-2xl p-8 text-white relative overflow-hidden">
+
+                    <div class="bg-gradient-to-br from-blue-500 to-emerald-400 rounded-2xl p-8 text-white relative overflow-hidden h-full">
                         <div class="text-center mb-8">
-                            <div class="text-6xl font-bold mb-2">${{PRICING_AMOUNT}}</div>
+                            <h3 class="text-2xl font-bold mb-2">{{PRICING_EARLY_ADOPTER_NAME}}</h3>
+                            <div class="text-5xl font-bold mb-2">${{PRICING_EARLY_ADOPTER_AMOUNT}}</div>
                             <div class="text-lg opacity-90">/{{PRICING_INTERVAL}}</div>
-                            <div class="text-sm mt-2 opacity-80">{{PRICING_TAGLINE}}</div>
+                            <div class="text-sm mt-2 opacity-80 font-semibold">🔒 Price Locked Forever</div>
                         </div>
-                        
+
                         <div class="space-y-3 mb-8">
                             <div class="flex items-center">
                                 <span class="text-white mr-3 text-lg">✅</span>
-                                <span class="text-white">{{PRICING_FEATURES_1}}</span>
+                                <span class="text-white">{{PRICING_EARLY_ADOPTER_OPERATIONS}} operations/month</span>
                             </div>
                             <div class="flex items-center">
                                 <span class="text-white mr-3 text-lg">✅</span>
-                                <span class="text-white">{{PRICING_FEATURES_2}}</span>
+                                <span class="text-white">{{PRICING_EARLY_ADOPTER_PROJECTS}} projects</span>
                             </div>
                             <div class="flex items-center">
                                 <span class="text-white mr-3 text-lg">✅</span>
-                                <span class="text-white">{{PRICING_FEATURES_3}}</span>
+                                <span class="text-white">{{PRICING_EARLY_ADOPTER_SUPPORT}} support</span>
                             </div>
                             <div class="flex items-center">
                                 <span class="text-white mr-3 text-lg">✅</span>
-                                <span class="text-white">{{PRICING_FEATURES_4}}</span>
+                                <span class="text-white">All Free Trial features</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-yellow-300 mr-3 text-lg">🔒</span>
+                                <span class="text-white font-semibold">Price locked forever</span>
                             </div>
                         </div>
-                        
+
                         <div class="bg-white/20 rounded-lg p-4 mb-6">
                             <div class="flex items-center justify-center text-white font-semibold">
                                 <span class="mr-2">⚡</span>
-                                <span id="user-count">{{CURRENT_USERS}}</span> developers using {{PRICING_TIER_NAME}}
+                                <span id="user-count">{{CURRENT_USERS}}</span> early adopters joined
                             </div>
                         </div>
-                        
-                        <button 
-                            id="get-memory-tier-btn"
+
+                        <button
+                            id="get-early-adopter-btn"
                             class="w-full bg-white text-blue-600 hover:bg-gray-100 font-bold text-lg py-4 rounded-lg transition-colors"
+                            onclick="selectTier('early_adopter')"
                         >
                             <span class="mr-2">⚡</span>
-                            {{PRICING_CTA_TEXT}}
+                            Claim Early Adopter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Standard Memory Pro Tier -->
+                <div class="relative">
+                    <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 h-full">
+                        <div class="text-center mb-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">{{PRICING_STANDARD_NAME}}</h3>
+                            <div class="text-5xl font-bold text-gray-900 mb-2">${{PRICING_STANDARD_AMOUNT}}</div>
+                            <div class="text-gray-600">/{{PRICING_INTERVAL}}</div>
+                            <div class="text-sm mt-2 text-gray-500">For power users</div>
+                        </div>
+
+                        <div class="space-y-3 mb-8">
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_STANDARD_OPERATIONS}} operations/month</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_STANDARD_PROJECTS}} projects</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">{{PRICING_STANDARD_SUPPORT}} support</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-3 text-lg">✅</span>
+                                <span class="text-gray-700">All Early Adopter features</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-blue-500 mr-3 text-lg">⚡</span>
+                                <span class="text-gray-700">Higher operation limits</span>
+                            </div>
+                        </div>
+
+                        <button
+                            class="w-full bg-blue-600 text-white hover:bg-blue-700 font-bold text-lg py-4 rounded-lg transition-colors"
+                            onclick="selectTier('standard')"
+                        >
+                            Get Standard Pro
                         </button>
                     </div>
                 </div>
@@ -374,7 +462,7 @@
         <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
             <h3 class="text-2xl font-bold mb-4 flex items-center">
                 <span class="mr-2">⚡</span>
-                {{PRICING_TIER_NAME}} - ${{PRICING_AMOUNT}}/{{PRICING_INTERVAL}}
+                {{PRICING_EARLY_ADOPTER_NAME}} - ${{PRICING_EARLY_ADOPTER_AMOUNT}}/{{PRICING_INTERVAL}}
             </h3>
             <p class="text-gray-600 mb-6">
                 Enter your email to proceed with checkout. Your license key will be available immediately after payment.
@@ -435,22 +523,51 @@
             });
         });
 
+        // Global variable to store selected tier
+        let selectedTier = null;
+
+        // Tier selection functions
+        function startFreeTrial() {
+            // For free trial, we can directly redirect to installation instructions
+            alert('Free Trial: Install with "npm install -g codecontextpro-mes" and run "codecontextpro activate" to start your 7-day free trial!');
+        }
+
+        function selectTier(tier) {
+            selectedTier = tier;
+            const modal = document.getElementById('email-modal');
+            const emailInput = document.getElementById('email-input');
+
+            // Update modal title based on tier
+            const modalTitle = document.querySelector('#email-modal h3');
+            if (tier === 'early_adopter') {
+                modalTitle.textContent = 'Claim Your Early Adopter Spot';
+            } else if (tier === 'standard') {
+                modalTitle.textContent = 'Get Standard Memory Pro';
+            }
+
+            modal.classList.remove('hidden');
+            emailInput.focus();
+        }
+
         // Email modal functionality
         const modal = document.getElementById('email-modal');
-        const getMemoryTierBtn = document.getElementById('get-memory-tier-btn');
         const cancelBtn = document.getElementById('cancel-btn');
         const checkoutBtn = document.getElementById('checkout-btn');
         const emailInput = document.getElementById('email-input');
         const checkoutText = document.getElementById('checkout-text');
 
-        getMemoryTierBtn.addEventListener('click', function() {
-            modal.classList.remove('hidden');
-            emailInput.focus();
-        });
+        // Legacy support for old button (if it exists)
+        const getMemoryTierBtn = document.getElementById('get-memory-tier-btn');
+        if (getMemoryTierBtn) {
+            getMemoryTierBtn.addEventListener('click', function() {
+                selectTier('early_adopter'); // Default to early adopter for legacy button
+            });
+        }
 
         cancelBtn.addEventListener('click', function() {
             modal.classList.add('hidden');
             emailInput.value = '';
+            selectedTier = null;
         });
 
         // Close modal when clicking outside
@@ -458,15 +575,21 @@
             if (e.target === modal) {
                 modal.classList.add('hidden');
                 emailInput.value = '';
+                selectedTier = null;
             }
         });
 
         // Checkout process with email
         checkoutBtn.addEventListener('click', async function() {
             const email = emailInput.value.trim();
-            
+
             if (!email || !email.includes('@')) {
                 alert('Please enter a valid email address.');
+                return;
+            }
+
+            if (!selectedTier) {
+                alert('Please select a tier first.');
                 return;
             }
 
@@ -483,7 +606,7 @@
                     },
                     body: JSON.stringify({
                         email: email,
-                        tier: 'memory'
+                        tier: selectedTier
                     })
                 });
 

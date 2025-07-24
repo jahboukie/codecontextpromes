@@ -10,6 +10,8 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "jest",
+    "test:unit": "jest --testMatch='<rootDir>/src/__tests__/*.test.ts'",
+    "test:mes": "jest --testMatch='<rootDir>/src/__tests__/mes.test.ts' --runInBand",
     "lint": "eslint \"src/**/*.ts\" \"firebase-setup/functions/src/**/*.ts\"",
     "lint:fix": "eslint src/**/*.ts --fix",
     "security:audit": "npm audit",
@@ -17,7 +19,10 @@
     "security:scan": "git diff --cached --name-only | xargs grep -l \"sk_\\|pk_live\\|AIza[0-9A-Za-z\\\\-_]{35}\" || echo \"No secrets detected\"",
     "deploy": "npm run build && npm run test && cd firebase-setup && node deploy.js",
     "firebase:deploy": "cd firebase-setup/functions && npm run deploy",
-    "firebase:local": "cd firebase-setup && firebase emulators:start"
+    "firebase:local": "cd firebase-setup && firebase emulators:start",
+    "start:mes": "cd execution-engine && npm start",
+    "pretest:mes": "npm run build:execution",
+    "build:execution": "cd execution-engine && npm run build"
   },
   "keywords": [
     "ai",
@@ -30,12 +35,15 @@
   "author": "CodeContext Team",
   "license": "MIT",
   "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "chalk": "^4.1.2",
     "eslint": "^9.31.0",
     "eslint-plugin-security": "^1.7.1",
+    "fs-extra": "^11.1.1",
     "jest": "^30.0.5",
     "ts-jest": "^29.0.0",
     "ts-node": "^10.0.0",
