@@ -8,8 +8,7 @@ on:
 
 env:
   NODE_VERSION: '18'
-  # Set NODE_ENV for MES to production for consistency (or development if you prefer debug logs)
-  NODE_ENV: 'production'
+  # NODE_ENV: 'production' # Removed to allow devDependencies installation for linting
 
 jobs:
   security-audit:
