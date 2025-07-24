@@ -27,17 +27,37 @@ const envVars = {
     // Stripe Configuration
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
     
-    // Pricing Configuration
-    PRICING_TIER_NAME: process.env.PRICING_TIER_NAME || 'Memory Tier',
-    PRICING_AMOUNT: process.env.PRICING_AMOUNT || '19',
+    // Pricing Configuration - Three Tier Structure
+    // Free Trial Tier
+    PRICING_FREE_TRIAL_NAME: process.env.PRICING_FREE_TRIAL_NAME || 'Free Trial',
+    PRICING_FREE_TRIAL_AMOUNT: process.env.PRICING_FREE_TRIAL_AMOUNT || '0',
+    PRICING_FREE_TRIAL_OPERATIONS: process.env.PRICING_FREE_TRIAL_OPERATIONS || '100',
+    PRICING_FREE_TRIAL_PROJECTS: process.env.PRICING_FREE_TRIAL_PROJECTS || '1',
+    PRICING_FREE_TRIAL_SUPPORT: process.env.PRICING_FREE_TRIAL_SUPPORT || 'Community',
+    PRICING_FREE_TRIAL_FEATURES: process.env.PRICING_FREE_TRIAL_FEATURES || 'Local Memory, AES-256 Encryption',
+
+    // Early Adopter Tier (Featured/Primary)
+    PRICING_EARLY_ADOPTER_NAME: process.env.PRICING_EARLY_ADOPTER_NAME || 'Early Adopter',
+    PRICING_EARLY_ADOPTER_AMOUNT: process.env.PRICING_EARLY_ADOPTER_AMOUNT || '29',
+    PRICING_EARLY_ADOPTER_OPERATIONS: process.env.PRICING_EARLY_ADOPTER_OPERATIONS || '5,000',
+    PRICING_EARLY_ADOPTER_PROJECTS: process.env.PRICING_EARLY_ADOPTER_PROJECTS || 'Unlimited',
+    PRICING_EARLY_ADOPTER_SUPPORT: process.env.PRICING_EARLY_ADOPTER_SUPPORT || 'Priority',
+    PRICING_EARLY_ADOPTER_FEATURES: process.env.PRICING_EARLY_ADOPTER_FEATURES || 'All Free Trial + Unlimited Projects, Price Locked Forever',
+    PRICING_EARLY_ADOPTER_SPECIAL: process.env.PRICING_EARLY_ADOPTER_SPECIAL || 'true',
+
+    // Standard Memory Pro Tier
+    PRICING_STANDARD_NAME: process.env.PRICING_STANDARD_NAME || 'Standard Memory Pro',
+    PRICING_STANDARD_AMOUNT: process.env.PRICING_STANDARD_AMOUNT || '49',
+    PRICING_STANDARD_OPERATIONS: process.env.PRICING_STANDARD_OPERATIONS || '10,000',
+    PRICING_STANDARD_PROJECTS: process.env.PRICING_STANDARD_PROJECTS || 'Unlimited',
+    PRICING_STANDARD_SUPPORT: process.env.PRICING_STANDARD_SUPPORT || 'Priority',
+    PRICING_STANDARD_FEATURES: process.env.PRICING_STANDARD_FEATURES || 'All Founders Special (without price lock)',
+
+    // General Pricing Configuration
     PRICING_CURRENCY: process.env.PRICING_CURRENCY || 'USD',
     PRICING_INTERVAL: process.env.PRICING_INTERVAL || 'month',
-    PRICING_FEATURES_1: process.env.PRICING_FEATURES_1 || '5,000 Memory Recalls/month',
-    PRICING_FEATURES_2: process.env.PRICING_FEATURES_2 || 'Unlimited Memory Storage',
-    PRICING_FEATURES_3: process.env.PRICING_FEATURES_3 || 'Unlimited Projects',
-    PRICING_FEATURES_4: process.env.PRICING_FEATURES_4 || 'AES-256 Encryption',
-    PRICING_TAGLINE: process.env.PRICING_TAGLINE || 'Building the Future Together',
-    PRICING_CTA_TEXT: process.env.PRICING_CTA_TEXT || 'Get Memory Tier',
+    PRICING_TAGLINE: process.env.PRICING_TAGLINE || 'Get Your AI Superpowers',
+    PRICING_CTA_TEXT: process.env.PRICING_CTA_TEXT || 'Get Started & Claim Your Founders Special',
     
     // User Count Display
     CURRENT_USERS: process.env.CURRENT_USERS || '2847',
@@ -149,3 +169,7 @@ console.log('   ✅ Environment variable injection successful');
 console.log('   ✅ Template placeholders replaced');
 
 console.log('\n🚀 Ready for deployment: firebase deploy --only hosting');
+console.log('\n⚠️  SECURITY WARNING: The generated index.html contains real API keys!');
+console.log('   📁 File location: firebase-setup/public/index.html');
+console.log('   🚫 This file is in .gitignore and should NEVER be committed to git');
+console.log('   🔒 Only deploy this file to Firebase hosting, never commit to repository');

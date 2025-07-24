@@ -16,6 +16,9 @@ firebase-setup/.env
 firebase-setup/service-account.json
 firebase-setup/config/production.json
 
+# Generated HTML files with secrets (NEVER COMMIT THESE)
+firebase-setup/public/index.html
+
 # CodeContext Pro
 .codecontext/memory.db
 .codecontext/logs/
