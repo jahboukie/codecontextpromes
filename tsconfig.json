@@ -15,7 +15,7 @@
   },
   "include": [
     "src/**/*"
-  ],
+, "hn-memory-test.js", "jest.config.js", "landing-page-migration-simulation.js"  ],
   "exclude": [
     "node_modules",
     "dist",

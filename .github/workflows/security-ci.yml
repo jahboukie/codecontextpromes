@@ -38,8 +38,14 @@ jobs:
       env:
         DEFAULT_BRANCH: main
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VALIDATE_TYPESCRIPT_ES: true
-        VALIDATE_JAVASCRIPT_ES: true
+        # Disable super-linter's ESLint checks since we're using ESLint 9 flat config
+        # which is incompatible with super-linter's --eslintrc option
+        VALIDATE_TYPESCRIPT_ES: false
+        VALIDATE_JAVASCRIPT_ES: false
+        # Keep other linters active for security scanning
+        VALIDATE_JSON: true
+        VALIDATE_YAML: true
+        VALIDATE_MARKDOWN: true
         
     - name: Secret Scanning
       run: |
