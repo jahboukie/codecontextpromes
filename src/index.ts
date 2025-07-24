@@ -10,7 +10,7 @@ import { MemoryEngine } from './MemoryEngine';
 import { FirebaseService } from './FirebaseService';
 import { LicenseService } from './LicenseService';
 
-export const version = "1.2.6";
+export const version = "1.3.0";
 
 export class CodeContextCLI {
     private memoryEngine: MemoryEngine;
